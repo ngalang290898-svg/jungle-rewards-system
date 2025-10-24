@@ -7,7 +7,7 @@ const PORT = process.env.PORT || 3000;
 // Middleware - FIXED for Vercel
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static(process.cwd() + '/public'));
 
 // Student Data (All 72 pupils - KEEP YOUR EXACT DATA)
 const STUDENT_DATA = {
