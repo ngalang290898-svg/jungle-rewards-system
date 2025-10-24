@@ -1,15 +1,20 @@
 import express from 'express';
 import cors from 'cors';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware - FIXED for Vercel
+// Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static(process.cwd() + '/public'));
+app.use(express.static(__dirname));
 
-// Student Data (All 72 pupils - KEEP YOUR EXACT DATA)
+// Student Data (All 72 pupils)
 const STUDENT_DATA = {
   "4 Pearl": {
     "Pre-A1": {
@@ -121,7 +126,7 @@ const STUDENT_DATA = {
   }
 };
 
-// In-memory data storage (for Vercel compatibility)
+// In-memory data storage
 let studentsData = [];
 
 // Initialize data
@@ -160,7 +165,6 @@ function authenticateToken(req, res, next) {
     return res.status(401).json({ success: false, error: 'Access token required' });
   }
 
-  // Simple token validation
   if (token === 'authenticated') {
     next();
   } else {
@@ -184,9 +188,6 @@ app.post('/api/auth/login', (req, res) => {
   try {
     const { password } = req.body;
     
-    console.log('Login attempt with password:', password);
-    
-    // Simple password check
     if (password === 'jungle123') {
       res.json({
         success: true,
@@ -200,7 +201,6 @@ app.post('/api/auth/login', (req, res) => {
       });
     }
   } catch (error) {
-    console.error('Login error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -209,8 +209,6 @@ app.post('/api/auth/login', (req, res) => {
 app.get('/api/students', (req, res) => {
   try {
     const classFilter = req.query.class;
-    
-    console.log('Fetching students for class:', classFilter);
     
     const filteredData = classFilter && classFilter !== 'all' 
       ? studentsData.filter(student => student.class === classFilter)
@@ -223,7 +221,6 @@ app.get('/api/students', (req, res) => {
       lastUpdated: new Date().toISOString()
     });
   } catch (error) {
-    console.error('Students API error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -232,8 +229,6 @@ app.get('/api/students', (req, res) => {
 app.get('/api/groups', (req, res) => {
   try {
     const classFilter = req.query.class;
-    
-    console.log('Fetching groups for class:', classFilter);
 
     const filteredData = classFilter && classFilter !== 'all' 
       ? studentsData.filter(student => student.class === classFilter)
@@ -272,7 +267,6 @@ app.get('/api/groups', (req, res) => {
       }, 0)
     });
   } catch (error) {
-    console.error('Groups API error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -281,8 +275,6 @@ app.get('/api/groups', (req, res) => {
 app.post('/api/students/points', authenticateToken, (req, res) => {
   try {
     const { studentName, change } = req.body;
-    
-    console.log('Updating points for:', studentName, 'change:', change);
     
     const studentIndex = studentsData.findIndex(s => s.name === studentName);
     if (studentIndex === -1) {
@@ -303,7 +295,6 @@ app.post('/api/students/points', authenticateToken, (req, res) => {
       change: parseInt(change)
     });
   } catch (error) {
-    console.error('Update points error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -312,8 +303,6 @@ app.post('/api/students/points', authenticateToken, (req, res) => {
 app.post('/api/groups/bonus', authenticateToken, (req, res) => {
   try {
     const { groupName, className } = req.body;
-    
-    console.log('Applying group bonus to:', groupName, 'in class:', className);
     
     const groupStudents = studentsData.filter(s => s.group === groupName && s.class === className);
     
@@ -331,7 +320,6 @@ app.post('/api/groups/bonus', authenticateToken, (req, res) => {
       pointsAdded: groupStudents.length * 10
     });
   } catch (error) {
-    console.error('Group bonus error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -339,8 +327,6 @@ app.post('/api/groups/bonus', authenticateToken, (req, res) => {
 // Reset all points
 app.post('/api/students/reset', authenticateToken, (req, res) => {
   try {
-    console.log('Resetting all points...');
-    
     studentsData.forEach(student => {
       student.points = 0;
       student.lastUpdated = new Date().toISOString();
@@ -353,7 +339,6 @@ app.post('/api/students/reset', authenticateToken, (req, res) => {
       studentsReset: studentsData.length
     });
   } catch (error) {
-    console.error('Reset points error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -361,8 +346,6 @@ app.post('/api/students/reset', authenticateToken, (req, res) => {
 // Initialize data
 app.post('/api/students/initialize', authenticateToken, (req, res) => {
   try {
-    console.log('Initializing system data...');
-    
     const initializedData = initializeData();
 
     res.json({
@@ -372,14 +355,13 @@ app.post('/api/students/initialize', authenticateToken, (req, res) => {
       classes: Object.keys(STUDENT_DATA)
     });
   } catch (error) {
-    console.error('Initialize data error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// Serve frontend for all other routes
+// Serve frontend for all routes
 app.get('*', (req, res) => {
-  res.sendFile(process.cwd() + '/public/index.html');
+  res.sendFile(join(__dirname, 'index.html'));
 });
 
 // Start server
@@ -387,7 +369,6 @@ app.listen(PORT, () => {
   console.log(`🚀 Jungle Rewards System running on port ${PORT}`);
   console.log(`📊 Total students: ${studentsData.length}`);
   console.log(`🏫 Classes: 4 Pearl (36), 4 Crystal (36)`);
-  console.log(`🌐 Health check: http://localhost:${PORT}/api/health`);
 });
 
 export default app;
