@@ -1,22 +1,15 @@
 import express from 'express';
 import cors from 'cors';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import fs from 'fs/promises';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET || 'jungle_rewards_super_secret_2023';
 
-// Middleware
+// Middleware - FIXED for Vercel
 app.use(cors());
 app.use(express.json());
-app.use(express.static(join(__dirname, 'public')));
+app.use(express.static('public'));
 
-// Student Data (All 72 pupils)
+// Student Data (All 72 pupils - KEEP YOUR EXACT DATA)
 const STUDENT_DATA = {
   "4 Pearl": {
     "Pre-A1": {
@@ -128,59 +121,37 @@ const STUDENT_DATA = {
   }
 };
 
-// Data storage
-const dataFile = join(__dirname, 'data', 'students.json');
+// In-memory data storage (for Vercel compatibility)
+let studentsData = [];
 
-// Ensure data directory exists
-async function ensureDataDir() {
-  try {
-    await fs.mkdir(join(__dirname, 'data'), { recursive: true });
-  } catch (error) {
-    // Directory already exists
-  }
-}
-
-// Load student data
-async function loadStudentData() {
-  try {
-    await ensureDataDir();
-    const data = await fs.readFile(dataFile, 'utf8');
-    return JSON.parse(data);
-  } catch (error) {
-    // Initialize with default data
-    const initialData = [];
-    
-    for (const [className, levels] of Object.entries(STUDENT_DATA)) {
-      for (const [level, groups] of Object.entries(levels)) {
-        for (const [groupName, students] of Object.entries(groups)) {
-          students.forEach(studentName => {
-            initialData.push({
-              id: `${className}-${level}-${groupName}-${studentName}`.replace(/\s+/g, '-'),
-              class: className,
-              level: level,
-              group: groupName,
-              name: studentName,
-              points: 0,
-              lastUpdated: new Date().toISOString(),
-              remarks: 'Initialized'
-            });
+// Initialize data
+function initializeData() {
+  studentsData = [];
+  for (const [className, levels] of Object.entries(STUDENT_DATA)) {
+    for (const [level, groups] of Object.entries(levels)) {
+      for (const [groupName, students] of Object.entries(groups)) {
+        students.forEach(studentName => {
+          studentsData.push({
+            id: `${className}-${level}-${groupName}-${studentName}`.replace(/\s+/g, '-'),
+            class: className,
+            level: level,
+            group: groupName,
+            name: studentName,
+            points: 0,
+            lastUpdated: new Date().toISOString(),
+            remarks: 'Initialized'
           });
-        }
+        });
       }
     }
-    
-    await saveStudentData(initialData);
-    return initialData;
   }
+  return studentsData;
 }
 
-// Save student data
-async function saveStudentData(data) {
-  await ensureDataDir();
-  await fs.writeFile(dataFile, JSON.stringify(data, null, 2));
-}
+// Initialize on server start
+initializeData();
 
-// Authentication Middleware
+// Authentication middleware
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -189,7 +160,7 @@ function authenticateToken(req, res, next) {
     return res.status(401).json({ success: false, error: 'Access token required' });
   }
 
-  // Simple token validation (in production, use JWT)
+  // Simple token validation
   if (token === 'authenticated') {
     next();
   } else {
@@ -199,12 +170,23 @@ function authenticateToken(req, res, next) {
 
 // Routes
 
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    success: true, 
+    message: 'Jungle Rewards API is running!',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Login endpoint
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', (req, res) => {
   try {
     const { password } = req.body;
     
-    // Simple password check (in production, use proper hashing)
+    console.log('Login attempt with password:', password);
+    
+    // Simple password check
     if (password === 'jungle123') {
       res.json({
         success: true,
@@ -218,19 +200,21 @@ app.post('/api/auth/login', async (req, res) => {
       });
     }
   } catch (error) {
+    console.error('Login error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
 // Get all students data
-app.get('/api/students', async (req, res) => {
+app.get('/api/students', (req, res) => {
   try {
-    const data = await loadStudentData();
     const classFilter = req.query.class;
     
+    console.log('Fetching students for class:', classFilter);
+    
     const filteredData = classFilter && classFilter !== 'all' 
-      ? data.filter(student => student.class === classFilter)
-      : data;
+      ? studentsData.filter(student => student.class === classFilter)
+      : studentsData;
 
     res.json({
       success: true,
@@ -239,19 +223,21 @@ app.get('/api/students', async (req, res) => {
       lastUpdated: new Date().toISOString()
     });
   } catch (error) {
+    console.error('Students API error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
 // Get groups data
-app.get('/api/groups', async (req, res) => {
+app.get('/api/groups', (req, res) => {
   try {
-    const data = await loadStudentData();
     const classFilter = req.query.class;
+    
+    console.log('Fetching groups for class:', classFilter);
 
     const filteredData = classFilter && classFilter !== 'all' 
-      ? data.filter(student => student.class === classFilter)
-      : data;
+      ? studentsData.filter(student => student.class === classFilter)
+      : studentsData;
 
     // Group by class → level → group
     const grouped = {};
@@ -286,28 +272,28 @@ app.get('/api/groups', async (req, res) => {
       }, 0)
     });
   } catch (error) {
+    console.error('Groups API error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
 // Update student points
-app.post('/api/students/points', authenticateToken, async (req, res) => {
+app.post('/api/students/points', authenticateToken, (req, res) => {
   try {
     const { studentName, change } = req.body;
-    const data = await loadStudentData();
     
-    const studentIndex = data.findIndex(s => s.name === studentName);
+    console.log('Updating points for:', studentName, 'change:', change);
+    
+    const studentIndex = studentsData.findIndex(s => s.name === studentName);
     if (studentIndex === -1) {
       return res.status(404).json({ success: false, error: 'Student not found' });
     }
 
-    const student = data[studentIndex];
+    const student = studentsData[studentIndex];
     const previousPoints = student.points;
     student.points = Math.max(0, previousPoints + parseInt(change));
     student.lastUpdated = new Date().toISOString();
     student.remarks = `Points ${change >= 0 ? 'added' : 'deducted'}: ${change}`;
-
-    await saveStudentData(data);
 
     res.json({
       success: true,
@@ -317,25 +303,25 @@ app.post('/api/students/points', authenticateToken, async (req, res) => {
       change: parseInt(change)
     });
   } catch (error) {
+    console.error('Update points error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
 // Apply group bonus
-app.post('/api/groups/bonus', authenticateToken, async (req, res) => {
+app.post('/api/groups/bonus', authenticateToken, (req, res) => {
   try {
     const { groupName, className } = req.body;
-    const data = await loadStudentData();
     
-    const groupStudents = data.filter(s => s.group === groupName && s.class === className);
+    console.log('Applying group bonus to:', groupName, 'in class:', className);
+    
+    const groupStudents = studentsData.filter(s => s.group === groupName && s.class === className);
     
     groupStudents.forEach(student => {
       student.points += 10;
       student.lastUpdated = new Date().toISOString();
       student.remarks = 'Group bonus: +10';
     });
-
-    await saveStudentData(data);
 
     res.json({
       success: true,
@@ -345,77 +331,63 @@ app.post('/api/groups/bonus', authenticateToken, async (req, res) => {
       pointsAdded: groupStudents.length * 10
     });
   } catch (error) {
+    console.error('Group bonus error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
 // Reset all points
-app.post('/api/students/reset', authenticateToken, async (req, res) => {
+app.post('/api/students/reset', authenticateToken, (req, res) => {
   try {
-    const data = await loadStudentData();
+    console.log('Resetting all points...');
     
-    data.forEach(student => {
+    studentsData.forEach(student => {
       student.points = 0;
       student.lastUpdated = new Date().toISOString();
       student.remarks = 'Points reset';
     });
 
-    await saveStudentData(data);
-
     res.json({
       success: true,
       message: 'Reset all points to 0',
-      studentsReset: data.length
+      studentsReset: studentsData.length
     });
   } catch (error) {
+    console.error('Reset points error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
 // Initialize data
-app.post('/api/students/initialize', authenticateToken, async (req, res) => {
+app.post('/api/students/initialize', authenticateToken, (req, res) => {
   try {
-    const initialData = [];
+    console.log('Initializing system data...');
     
-    for (const [className, levels] of Object.entries(STUDENT_DATA)) {
-      for (const [level, groups] of Object.entries(levels)) {
-        for (const [groupName, students] of Object.entries(groups)) {
-          students.forEach(studentName => {
-            initialData.push({
-              id: `${className}-${level}-${groupName}-${studentName}`.replace(/\s+/g, '-'),
-              class: className,
-              level: level,
-              group: groupName,
-              name: studentName,
-              points: 0,
-              lastUpdated: new Date().toISOString(),
-              remarks: 'Initialized'
-            });
-          });
-        }
-      }
-    }
-    
-    await saveStudentData(initialData);
+    const initializedData = initializeData();
 
     res.json({
       success: true,
-      message: `Initialized ${initialData.length} students across ${Object.keys(STUDENT_DATA).length} classes`,
-      totalStudents: initialData.length,
+      message: `Initialized ${initializedData.length} students across ${Object.keys(STUDENT_DATA).length} classes`,
+      totalStudents: initializedData.length,
       classes: Object.keys(STUDENT_DATA)
     });
   } catch (error) {
+    console.error('Initialize data error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// Serve frontend
-app.get('/', (req, res) => {
-  res.sendFile(join(__dirname, 'public', 'index.html'));
+// Serve frontend for all other routes
+app.get('*', (req, res) => {
+  res.sendFile(process.cwd() + '/public/index.html');
 });
 
+// Start server
 app.listen(PORT, () => {
   console.log(`🚀 Jungle Rewards System running on port ${PORT}`);
-  console.log(`📊 Total students: 72`);
+  console.log(`📊 Total students: ${studentsData.length}`);
   console.log(`🏫 Classes: 4 Pearl (36), 4 Crystal (36)`);
+  console.log(`🌐 Health check: http://localhost:${PORT}/api/health`);
 });
+
+export default app;
