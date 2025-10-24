@@ -30,7 +30,7 @@ class JungleRewardsSystem {
             
         } catch (error) {
             console.error('Error initializing app:', error);
-            this.showToast('Failed to initialize app', 'error');
+            this.showToast('Failed to initialize app. Please refresh.', 'error');
         }
     }
 
@@ -54,6 +54,8 @@ class JungleRewardsSystem {
             const response = await fetch(url, config);
             
             if (!response.ok) {
+                const errorText = await response.text();
+                console.error('API Error Response:', errorText);
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
@@ -62,7 +64,16 @@ class JungleRewardsSystem {
             return data;
         } catch (error) {
             console.error('❌ API request failed:', error);
-            this.showToast('Network error - please check connection', 'error');
+            
+            // More specific error messages
+            if (error.message.includes('Failed to fetch')) {
+                this.showToast('Cannot connect to server. Please check your internet connection.', 'error');
+            } else if (error.message.includes('500')) {
+                this.showToast('Server error. Please try again later.', 'error');
+            } else {
+                this.showToast('Network error - please check connection', 'error');
+            }
+            
             throw error;
         }
     }
@@ -81,11 +92,66 @@ class JungleRewardsSystem {
             }
         } catch (error) {
             console.error('Error loading initial data:', error);
-            this.showToast('Failed to load data', 'error');
             
-            // Show offline mode
-            this.updateGroupsDisplay({});
+            // Show demo data if API fails
+            this.showDemoData();
         }
+    }
+
+    // Demo data for when API is not available
+    showDemoData() {
+        const groupsGrid = document.getElementById('groupsGrid');
+        if (!groupsGrid) return;
+
+        groupsGrid.innerHTML = `
+            <div class="demo-mode">
+                <div class="demo-alert">
+                    <i class="fas fa-info-circle"></i>
+                    <h3>Demo Mode</h3>
+                    <p>Showing sample data. Real data will load when server is connected.</p>
+                </div>
+                <div class="group-card">
+                    <div class="group-header">
+                        <div class="group-name">🐯 The Mighty Tigers</div>
+                        <div class="group-level">
+                            <i class="fas fa-layer-group"></i>
+                            Pre-A1 • 4 Pearl
+                        </div>
+                    </div>
+                    <div class="group-stats">
+                        <div class="points-display">
+                            <div class="points-icon">
+                                <i class="fas fa-gem"></i>
+                            </div>
+                            <div class="points-info">
+                                <div class="points-value">0</div>
+                                <div class="points-label">Crystals</div>
+                            </div>
+                        </div>
+                        <div class="member-count">
+                            <i class="fas fa-users"></i>
+                            5 members
+                        </div>
+                    </div>
+                    <div class="group-actions">
+                        <button class="group-action-btn view-members" onclick="app.showDemoMembers()">
+                            <i class="fas fa-list"></i>
+                            View Members
+                        </button>
+                    </div>
+                </div>
+                <div class="retry-section">
+                    <button class="premium-btn" onclick="app.loadInitialData()">
+                        <i class="fas fa-sync-alt"></i>
+                        Retry Connection
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    showDemoMembers() {
+        this.showToast('Connect to server to view real member data', 'info');
     }
 
     async verifyAdminPassword(password) {
@@ -103,6 +169,11 @@ class JungleRewardsSystem {
                 this.toggleAuthState(true);
                 this.showToast('Admin access granted!', 'success');
                 this.hideModal('loginModal');
+                
+                // Clear password field
+                const adminPassword = document.getElementById('adminPassword');
+                if (adminPassword) adminPassword.value = '';
+                
             } else {
                 this.showToast('Invalid password', 'error');
             }
@@ -110,13 +181,18 @@ class JungleRewardsSystem {
             return result;
         } catch (error) {
             console.error('Login error:', error);
-            this.showToast('Login failed - check connection', 'error');
+            // Error message already shown by fetchData
             return { success: false, error: error.message };
         }
     }
 
     async updateStudentPoints(studentName, pointsChange) {
         try {
+            if (!this.isAuthenticated) {
+                this.showToast('Please login as teacher first', 'warning');
+                return { success: false, error: 'Not authenticated' };
+            }
+
             console.log(`🔄 Updating points for ${studentName}: ${pointsChange}`);
             const result = await this.fetchData('/students/points', {
                 method: 'POST',
@@ -128,7 +204,8 @@ class JungleRewardsSystem {
 
             if (result.success) {
                 const action = pointsChange >= 0 ? 'added' : 'deducted';
-                this.showToast(`${pointsChange} points ${action} for ${studentName}`, 'success');
+                const emoji = pointsChange >= 0 ? '✨' : '⚠️';
+                this.showToast(`${emoji} ${Math.abs(pointsChange)} points ${action} for ${studentName}`, 'success');
                 await this.loadInitialData(); // Refresh data
             } else {
                 this.showToast(result.error, 'error');
@@ -137,13 +214,18 @@ class JungleRewardsSystem {
             return result;
         } catch (error) {
             console.error('Update points error:', error);
-            this.showToast('Failed to update points', 'error');
+            // Error message already shown by fetchData
             return { success: false, error: error.message };
         }
     }
 
     async applyGroupBonus(groupName, className) {
         try {
+            if (!this.isAuthenticated) {
+                this.showToast('Please login as teacher first', 'warning');
+                return { success: false, error: 'Not authenticated' };
+            }
+
             console.log(`🎯 Applying group bonus to ${groupName}`);
             const result = await this.fetchData('/groups/bonus', {
                 method: 'POST',
@@ -154,7 +236,7 @@ class JungleRewardsSystem {
             });
 
             if (result.success) {
-                this.showToast(`+10 points bonus applied to ${groupName}`, 'success');
+                this.showToast(`🎉 +10 points bonus applied to ${groupName}`, 'success');
                 await this.loadInitialData();
             } else {
                 this.showToast(result.error, 'error');
@@ -163,14 +245,19 @@ class JungleRewardsSystem {
             return result;
         } catch (error) {
             console.error('Group bonus error:', error);
-            this.showToast('Failed to apply group bonus', 'error');
+            // Error message already shown by fetchData
             return { success: false, error: error.message };
         }
     }
 
     async resetAllPoints() {
         try {
-            if (!confirm('Are you sure you want to reset ALL points to zero? This cannot be undone.')) {
+            if (!this.isAuthenticated) {
+                this.showToast('Please login as teacher first', 'warning');
+                return { success: false, error: 'Not authenticated' };
+            }
+
+            if (!confirm('⚠️ Are you sure you want to reset ALL points to zero?\n\nThis action cannot be undone!')) {
                 return;
             }
 
@@ -180,7 +267,7 @@ class JungleRewardsSystem {
             });
 
             if (result.success) {
-                this.showToast(`Reset ${result.studentsReset} students to 0 points`, 'success');
+                this.showToast(`✅ Reset ${result.studentsReset} students to 0 points`, 'success');
                 await this.loadInitialData();
             } else {
                 this.showToast(result.error, 'error');
@@ -189,14 +276,19 @@ class JungleRewardsSystem {
             return result;
         } catch (error) {
             console.error('Reset points error:', error);
-            this.showToast('Failed to reset points', 'error');
+            // Error message already shown by fetchData
             return { success: false, error: error.message };
         }
     }
 
     async initializeSystemData() {
         try {
-            if (!confirm('Initialize system data? This will reset all students and points.')) {
+            if (!this.isAuthenticated) {
+                this.showToast('Please login as teacher first', 'warning');
+                return { success: false, error: 'Not authenticated' };
+            }
+
+            if (!confirm('🔄 Initialize system data?\n\nThis will reset all students and points to initial state.')) {
                 return;
             }
 
@@ -206,7 +298,7 @@ class JungleRewardsSystem {
             });
 
             if (result.success) {
-                this.showToast(`System initialized with ${result.totalStudents} students`, 'success');
+                this.showToast(`✅ System initialized with ${result.totalStudents} students`, 'success');
                 await this.loadInitialData();
             } else {
                 this.showToast(result.error, 'error');
@@ -215,7 +307,7 @@ class JungleRewardsSystem {
             return result;
         } catch (error) {
             console.error('Initialize data error:', error);
-            this.showToast('Failed to initialize data', 'error');
+            // Error message already shown by fetchData
             return { success: false, error: error.message };
         }
     }
@@ -232,17 +324,7 @@ class JungleRewardsSystem {
         groupsGrid.innerHTML = '';
 
         if (!groupsData || Object.keys(groupsData).length === 0) {
-            groupsGrid.innerHTML = `
-                <div class="no-data">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <h3>No Data Available</h3>
-                    <p>Unable to load group data. Please check your connection.</p>
-                    <button class="premium-btn" onclick="app.loadInitialData()">
-                        <i class="fas fa-sync-alt"></i>
-                        Retry
-                    </button>
-                </div>
-            `;
+            this.showDemoData();
             return;
         }
 
@@ -257,8 +339,13 @@ class JungleRewardsSystem {
                     const groupPoints = groupData.totalPoints || 0;
                     const memberCount = groupData.members ? groupData.members.length : 0;
                     
+                    // Escape quotes for onclick attributes
+                    const safeClassName = className.replace(/'/g, "\\'");
+                    const safeGroupName = groupName.replace(/'/g, "\\'");
+                    const safeLevel = level.replace(/'/g, "\\'");
+                    
                     html += `
-                        <div class="group-card" data-class="${className}" data-group="${groupName}">
+                        <div class="group-card" data-class="${safeClassName}" data-group="${safeGroupName}">
                             <div class="group-header">
                                 <div class="group-name">${groupName}</div>
                                 <div class="group-level">
@@ -285,13 +372,13 @@ class JungleRewardsSystem {
                             
                             <div class="group-actions">
                                 <button class="group-action-btn view-members" 
-                                        onclick="app.showGroupMembers('${className}', '${groupName}', '${level}')">
+                                        onclick="app.showGroupMembers('${safeClassName}', '${safeGroupName}', '${safeLevel}')">
                                     <i class="fas fa-list"></i>
                                     View Members
                                 </button>
                                 ${this.isAuthenticated ? `
                                 <button class="group-action-btn group-bonus" 
-                                        onclick="app.applyGroupBonus('${groupName}', '${className}')">
+                                        onclick="app.applyGroupBonus('${safeGroupName}', '${safeClassName}')">
                                     <i class="fas fa-star"></i>
                                     +10 Bonus
                                 </button>
@@ -361,10 +448,14 @@ class JungleRewardsSystem {
                 <h4>Group Members</h4>
         `;
 
+        // Sort by points (descending)
         students.sort((a, b) => (b.points || 0) - (a.points || 0));
         
         students.forEach((student, index) => {
             const points = student.points || 0;
+            // Escape quotes for onclick
+            const safeName = student.name.replace(/'/g, "\\'");
+            
             html += `
                 <div class="member-item ${this.isAuthenticated ? 'editable' : ''}">
                     <div class="member-info">
@@ -376,13 +467,13 @@ class JungleRewardsSystem {
                     </div>
                     ${this.isAuthenticated ? `
                     <div class="member-actions">
-                        <button class="point-btn add-point" onclick="app.updateStudentPoints('${student.name}', 1)">
+                        <button class="point-btn add-point" onclick="app.updateStudentPoints('${safeName}', 1)" title="Add 1 point">
                             <i class="fas fa-plus"></i>
                         </button>
-                        <button class="point-btn remove-point" onclick="app.updateStudentPoints('${student.name}', -1)">
+                        <button class="point-btn remove-point" onclick="app.updateStudentPoints('${safeName}', -1)" title="Remove 1 point">
                             <i class="fas fa-minus"></i>
                         </button>
-                        <button class="point-btn bonus-point" onclick="app.updateStudentPoints('${student.name}', 5)">
+                        <button class="point-btn bonus-point" onclick="app.updateStudentPoints('${safeName}', 5)" title="Add 5 points">
                             <i class="fas fa-star"></i>
                         </button>
                     </div>
@@ -410,6 +501,7 @@ class JungleRewardsSystem {
         if (appContainer) {
             if (isAuthenticated) {
                 appContainer.classList.add('authenticated');
+                this.showToast('Teacher mode activated', 'success');
             } else {
                 appContainer.classList.remove('authenticated');
             }
@@ -419,7 +511,6 @@ class JungleRewardsSystem {
     switchView(view) {
         this.currentView = view;
         const viewButtons = document.querySelectorAll('.view-btn');
-        const viewToggle = document.getElementById('viewToggle');
         
         viewButtons.forEach(btn => {
             btn.classList.remove('active');
@@ -431,9 +522,9 @@ class JungleRewardsSystem {
         // Update UI based on view
         if (view === 'teacher' && !this.isAuthenticated) {
             this.showModal('loginModal');
+        } else {
+            this.showToast(`Switched to ${view} view`, 'info');
         }
-        
-        this.showToast(`Switched to ${view} view`, 'info');
     }
 
     switchClass(className) {
@@ -444,7 +535,6 @@ class JungleRewardsSystem {
         }
         
         this.loadInitialData();
-        this.showToast(`Now viewing ${className}`, 'info');
     }
 
     showModal(modalId) {
@@ -452,6 +542,14 @@ class JungleRewardsSystem {
         if (modal) {
             modal.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
+            
+            // Focus on input if it's login modal
+            if (modalId === 'loginModal') {
+                const adminPassword = document.getElementById('adminPassword');
+                if (adminPassword) {
+                    setTimeout(() => adminPassword.focus(), 100);
+                }
+            }
         }
     }
 
@@ -575,8 +673,7 @@ class JungleRewardsSystem {
     }
 
     exportData() {
-        // Simple data export (in a real app, this would generate a CSV or Excel file)
-        this.showToast('Export feature coming soon!', 'info');
+        this.showToast('📊 Export feature coming soon!', 'info');
     }
 
     setupEventListeners() {
@@ -644,12 +741,14 @@ class JungleRewardsSystem {
         const adminPassword = document.getElementById('adminPassword');
         
         if (submitLogin && adminPassword) {
+            // Button click
             submitLogin.addEventListener('click', () => {
-                const password = adminPassword.value;
+                const password = adminPassword.value.trim();
                 if (password) {
                     this.verifyAdminPassword(password);
                 } else {
                     this.showToast('Please enter password', 'warning');
+                    adminPassword.focus();
                 }
             });
 
@@ -659,6 +758,15 @@ class JungleRewardsSystem {
                     submitLogin.click();
                 }
             });
+
+            // Form submission (to fix the DOM warning)
+            const loginForm = adminPassword.closest('form') || adminPassword.parentElement;
+            if (loginForm && !loginForm.onSubmit) {
+                loginForm.onsubmit = (e) => {
+                    e.preventDefault();
+                    submitLogin.click();
+                };
+            }
         }
 
         // Refresh button
@@ -694,6 +802,14 @@ class JungleRewardsSystem {
                     this.hideModal(modal.id);
                 }
             });
+        });
+
+        // Escape key to close modals
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.hideModal('loginModal');
+                this.hideModal('groupModal');
+            }
         });
 
         // Home page CTA buttons
@@ -738,7 +854,7 @@ class JungleRewardsSystem {
             this.loadAdminData();
         }
 
-        this.showToast(`Navigated to ${page}`, 'info');
+        this.showToast(`Navigated to ${page.charAt(0).toUpperCase() + page.slice(1)}`, 'info');
     }
 
     async loadLeaderboardData(classFilter = 'all') {
@@ -753,7 +869,7 @@ class JungleRewardsSystem {
             }
         } catch (error) {
             console.error('Error loading leaderboard:', error);
-            this.showToast('Failed to load leaderboard', 'error');
+            this.showToast('Failed to load leaderboard data', 'error');
         }
     }
 
@@ -764,6 +880,12 @@ class JungleRewardsSystem {
         if (!groupsContent || !individualsContent) return;
 
         // Groups leaderboard
+        if (!groupsData || Object.keys(groupsData).length === 0) {
+            groupsContent.innerHTML = '<div class="no-data">No group data available</div>';
+            individualsContent.innerHTML = '<div class="no-data">No student data available</div>';
+            return;
+        }
+
         let groupsList = [];
         for (const [className, levels] of Object.entries(groupsData)) {
             for (const [level, groups] of Object.entries(levels)) {
@@ -785,9 +907,11 @@ class JungleRewardsSystem {
         let groupsHtml = '';
         groupsList.forEach((group, index) => {
             const rankClass = index < 3 ? `rank-${index + 1}` : '';
+            const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+            
             groupsHtml += `
                 <div class="leaderboard-item">
-                    <div class="rank ${rankClass}">${index + 1}</div>
+                    <div class="rank ${rankClass}">${medal} ${index + 1}</div>
                     <div class="leaderboard-info">
                         <div class="leaderboard-name">
                             ${group.name}
@@ -802,14 +926,15 @@ class JungleRewardsSystem {
             `;
         });
 
-        groupsContent.innerHTML = groupsHtml || '<div class="no-data">No group data available</div>';
+        groupsContent.innerHTML = groupsHtml;
 
-        // Individuals leaderboard (simplified - would need student data)
+        // Individuals leaderboard
         individualsContent.innerHTML = `
             <div class="feature-coming">
-                <i class="fas fa-tools"></i>
-                <h3>Individual Rankings Coming Soon</h3>
-                <p>We're working on individual student leaderboards!</p>
+                <i class="fas fa-trophy"></i>
+                <h3>Individual Rankings</h3>
+                <p>Individual student rankings will be available in the next update!</p>
+                <div class="coming-soon-badge">Coming Soon</div>
             </div>
         `;
     }
@@ -894,15 +1019,4 @@ document.addEventListener('DOMContentLoaded', () => {
 window.switchPage = (page) => window.app.switchPage(page);
 window.switchView = (view) => window.app.switchView(view);
 
-// Service Worker Registration (for PWA features)
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/sw.js')
-            .then(function(registration) {
-                console.log('SW registered: ', registration);
-            })
-            .catch(function(registrationError) {
-                console.log('SW registration failed: ', registrationError);
-            });
-    });
-}
+// Note: Service Worker removed to avoid 404 errors
