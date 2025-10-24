@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "node server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "build": "echo 'No build step needed for static site'"
   },
   "dependencies": {
     "express": "^4.18.2",
