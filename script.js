@@ -1,22 +1,3 @@
-// Add this at the VERY BEGINNING of your script.js file
-console.log('🔄 Script loaded successfully');
-
-// Test if CSS is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('✅ DOM fully loaded');
-    
-    // Check if styles are applied
-    const testElement = document.createElement('div');
-    testElement.style.position = 'absolute';
-    testElement.style.left = '-9999px';
-    testElement.innerHTML = 'CSS Test';
-    document.body.appendChild(testElement);
-    
-    const computedStyle = window.getComputedStyle(testElement);
-    console.log('🎨 CSS computed style test:', computedStyle.fontFamily);
-    
-    testElement.remove();
-});
 // Complete Student Data - All 72 Students
 const COMPLETE_DATA = {
   "4 Pearl": {
@@ -168,15 +149,18 @@ class JungleRewardsSystem {
         this.currentView = 'visitor';
         this.isAuthenticated = false;
         this.storageKey = 'jungleRewardsData';
+        this.currentTheme = 'dark';
         
         this.initializeApp();
     }
 
+    // ========== INITIALIZATION ==========
     initializeApp() {
-        console.log('🚀 Initializing Jungle Rewards System...');
+        console.log('🚀 Initializing Futuristic Jungle Rewards System...');
         
-        // Initialize or load data
         this.initializeData();
+        this.initializeTheme();
+        this.initializeBackground();
         
         // Check for existing authentication
         const savedAuth = localStorage.getItem('jungleAuthenticated');
@@ -189,19 +173,324 @@ class JungleRewardsSystem {
         this.setupEventListeners();
         this.hideLoadingScreen();
         
-        this.showToast('Welcome to Jungle Rewards!', 'success');
+        this.showToast('Welcome to the Magical Jungle! 🌿', 'success');
     }
 
     initializeData() {
         let storedData = localStorage.getItem(this.storageKey);
         
         if (!storedData) {
-            // First time - initialize with complete data
             localStorage.setItem(this.storageKey, JSON.stringify(COMPLETE_DATA));
-            this.showToast('System initialized with all student data', 'success');
+            this.showToast('✨ System initialized with all student data', 'success');
         }
     }
 
+    initializeTheme() {
+        const savedTheme = localStorage.getItem('jungleTheme') || 'dark';
+        this.currentTheme = savedTheme;
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        this.updateThemeIcon();
+    }
+
+    initializeBackground() {
+        this.setupParticleBackground();
+        this.setupWebGLBackground();
+    }
+
+    // ========== THEME MANAGEMENT ==========
+    toggleTheme() {
+        this.currentTheme = this.currentTheme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', this.currentTheme);
+        localStorage.setItem('jungleTheme', this.currentTheme);
+        this.updateThemeIcon();
+        this.showToast(`${this.currentTheme === 'dark' ? '🌙' : '☀️'} Theme switched to ${this.currentTheme}`, 'info');
+    }
+
+    updateThemeIcon() {
+        const themeIcon = document.querySelector('#themeToggle i');
+        if (themeIcon) {
+            themeIcon.className = this.currentTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        }
+    }
+
+    // ========== BACKGROUND ANIMATIONS ==========
+    setupParticleBackground() {
+        const container = document.getElementById('particle-overlay');
+        if (!container) return;
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        container.appendChild(canvas);
+
+        let width = window.innerWidth;
+        let height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+
+        const particles = [];
+        const particleCount = 50;
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.size = Math.random() * 3 + 1;
+                this.speedX = Math.random() * 2 - 1;
+                this.speedY = Math.random() * 2 - 1;
+                this.color = `hsl(${Math.random() * 60 + 160}, 70%, 60%)`;
+                this.alpha = Math.random() * 0.5 + 0.2;
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                if (this.x > width || this.x < 0) this.speedX *= -1;
+                if (this.y > height || this.y < 0) this.speedY *= -1;
+
+                this.alpha = 0.2 + 0.3 * Math.sin(Date.now() * 0.001 + this.x * 0.01);
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // Create particles
+        for (let i = 0; i < particleCount; i++) {
+            particles.push(new Particle());
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // Handle resize
+        window.addEventListener('resize', () => {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+        });
+    }
+
+    setupWebGLBackground() {
+        const container = document.getElementById('webgl-container');
+        if (!container || !window.THREE) return;
+
+        try {
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x000000, 0);
+            container.appendChild(renderer.domElement);
+
+            // Create floating geometric shapes
+            const geometries = [
+                new THREE.IcosahedronGeometry(1, 0),
+                new THREE.OctahedronGeometry(1, 0),
+                new THREE.TetrahedronGeometry(1, 0)
+            ];
+
+            const materials = [
+                new THREE.MeshBasicMaterial({ color: 0x00ffc3, wireframe: true }),
+                new THREE.MeshBasicMaterial({ color: 0x00a3ff, wireframe: true }),
+                new THREE.MeshBasicMaterial({ color: 0x8b5cf6, wireframe: true })
+            ];
+
+            const meshes = [];
+            
+            // Create multiple floating shapes
+            for (let i = 0; i < 8; i++) {
+                const geometry = geometries[Math.floor(Math.random() * geometries.length)];
+                const material = materials[Math.floor(Math.random() * materials.length)];
+                const mesh = new THREE.Mesh(geometry, material);
+                
+                mesh.position.x = (Math.random() - 0.5) * 20;
+                mesh.position.y = (Math.random() - 0.5) * 20;
+                mesh.position.z = (Math.random() - 0.5) * 10;
+                
+                mesh.rotation.x = Math.random() * Math.PI;
+                mesh.rotation.y = Math.random() * Math.PI;
+                
+                scene.add(mesh);
+                meshes.push(mesh);
+            }
+
+            camera.position.z = 15;
+
+            function animate() {
+                requestAnimationFrame(animate);
+
+                meshes.forEach((mesh, index) => {
+                    mesh.rotation.x += 0.005;
+                    mesh.rotation.y += 0.008;
+                    
+                    // Floating animation
+                    mesh.position.y += Math.sin(Date.now() * 0.001 + index) * 0.01;
+                });
+
+                renderer.render(scene, camera);
+            }
+
+            animate();
+
+            // Handle resize
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+        } catch (error) {
+            console.log('WebGL not supported, using fallback background');
+        }
+    }
+
+    // ========== REWARD ANIMATIONS ==========
+    playConfetti() {
+        const canvas = document.getElementById('confettiCanvas');
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const confettiPieces = [];
+        const confettiCount = 150;
+
+        class Confetti {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = -20;
+                this.size = Math.random() * 10 + 5;
+                this.speedY = Math.random() * 3 + 2;
+                this.speedX = Math.random() * 4 - 2;
+                this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                this.rotation = Math.random() * 360;
+                this.rotationSpeed = Math.random() * 10 - 5;
+            }
+
+            update() {
+                this.y += this.speedY;
+                this.x += this.speedX;
+                this.rotation += this.rotationSpeed;
+                
+                return this.y < canvas.height;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation * Math.PI / 180);
+                ctx.fillStyle = this.color;
+                ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
+                ctx.restore();
+            }
+        }
+
+        // Create confetti
+        for (let i = 0; i < confettiCount; i++) {
+            confettiPieces.push(new Confetti());
+        }
+
+        function animateConfetti() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            let activePieces = 0;
+            
+            confettiPieces.forEach(confetti => {
+                if (confetti.update()) {
+                    confetti.draw();
+                    activePieces++;
+                }
+            });
+
+            if (activePieces > 0) {
+                requestAnimationFrame(animateConfetti);
+            }
+        }
+
+        animateConfetti();
+
+        // Auto-remove canvas after animation
+        setTimeout(() => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }, 3000);
+    }
+
+    showRewardAnimation(message, points = 0) {
+        const container = document.getElementById('rewardContainer');
+        if (!container) return;
+
+        const rewardElement = document.createElement('div');
+        rewardElement.className = 'reward-popup';
+        rewardElement.innerHTML = `
+            <div class="reward-content">
+                <div class="reward-icon">🎉</div>
+                <div class="reward-message">${message}</div>
+                ${points ? `<div class="reward-points">+${points} points</div>` : ''}
+            </div>
+        `;
+
+        // Add styles
+        rewardElement.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: rgba(0, 255, 195, 0.1);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(0, 255, 195, 0.3);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            z-index: 1001;
+            animation: rewardPop 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+        `;
+
+        container.appendChild(rewardElement);
+
+        // Add CSS animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes rewardPop {
+                0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+                70% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+                100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Remove after animation
+        setTimeout(() => {
+            rewardElement.remove();
+            style.remove();
+        }, 3000);
+    }
+
+    // ========== DATA MANAGEMENT ==========
     getData() {
         const storedData = localStorage.getItem(this.storageKey);
         return storedData ? JSON.parse(storedData) : COMPLETE_DATA;
@@ -217,7 +506,6 @@ class JungleRewardsSystem {
         this.updateGroupsDisplay(data);
         this.updateLastUpdated();
         this.updateSystemStats(data);
-        this.showToast(`Loaded ${this.currentClass} data`, 'success');
     }
 
     updateGroupsDisplay(groupsData) {
@@ -287,7 +575,13 @@ class JungleRewardsSystem {
             }
         }
 
-        groupsGrid.innerHTML = html;
+        groupsGrid.innerHTML = html || `
+            <div class="loading-groups">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Discovering jungle tribes...</p>
+            </div>
+        `;
+        
         console.log(`✅ Displayed ${totalGroups} groups for ${this.currentClass}`);
     }
 
@@ -304,7 +598,6 @@ class JungleRewardsSystem {
     }
 
     showGroupModal(className, groupName, level, students) {
-        // Create modal HTML
         const modalHTML = `
             <div class="modal" id="groupModal">
                 <div class="modal-content premium-modal">
@@ -364,14 +657,11 @@ class JungleRewardsSystem {
             </div>
         `;
 
-        // Add modal to document
         document.body.insertAdjacentHTML('beforeend', modalHTML);
         
-        // Show modal
         const modal = document.getElementById('groupModal');
         modal.classList.remove('hidden');
         
-        // Add event listeners
         modal.querySelector('.close-modal').addEventListener('click', () => {
             modal.remove();
         });
@@ -383,6 +673,7 @@ class JungleRewardsSystem {
         });
     }
 
+    // ========== POINT MANAGEMENT ==========
     updateStudentPoints(studentName, pointsChange) {
         if (!this.isAuthenticated) {
             this.showToast('Please login as teacher first', 'warning');
@@ -392,7 +683,6 @@ class JungleRewardsSystem {
         const data = this.getData();
         let studentFound = false;
 
-        // Find and update the student's points
         for (const [className, levels] of Object.entries(data)) {
             for (const [level, groups] of Object.entries(levels)) {
                 for (const [groupName, groupData] of Object.entries(groups)) {
@@ -402,23 +692,23 @@ class JungleRewardsSystem {
                         const student = groupData.members[studentIndex];
                         const newPoints = Math.max(0, student.points + pointsChange);
                         
-                        // Update student points
                         student.points = newPoints;
-                        
-                        // Update group total
                         groupData.totalPoints = groupData.members.reduce((sum, s) => sum + s.points, 0);
                         
-                        // Save updated data
                         this.saveData(data);
-                        
-                        // Reload display
                         this.loadInitialData();
                         
                         const action = pointsChange >= 0 ? 'added' : 'deducted';
                         const emoji = pointsChange >= 0 ? '✨' : '⚠️';
+                        
+                        // Show reward animation for positive points
+                        if (pointsChange > 0) {
+                            this.showRewardAnimation(`${studentName} earned ${pointsChange} points!`, pointsChange);
+                            this.playConfetti();
+                        }
+                        
                         this.showToast(`${emoji} ${Math.abs(pointsChange)} points ${action} for ${studentName}`, 'success');
                         
-                        // Close modal if open
                         const modal = document.getElementById('groupModal');
                         if (modal) modal.remove();
                         
@@ -448,29 +738,23 @@ class JungleRewardsSystem {
         }
 
         let groupFound = false;
-        let levelName = '';
 
-        // Find the group and apply bonus
         for (const [level, groups] of Object.entries(groupData)) {
             if (groups[groupName]) {
                 groupFound = true;
-                levelName = level;
                 const group = groups[groupName];
                 
-                // Add 10 points to each member
                 group.members.forEach(student => {
                     student.points += 10;
                 });
                 
-                // Update group total
                 group.totalPoints = group.members.reduce((sum, s) => sum + s.points, 0);
                 
-                // Save updated data
                 this.saveData(data);
-                
-                // Reload display
                 this.loadInitialData();
                 
+                this.showRewardAnimation(`${groupName} received +10 bonus!`, 10);
+                this.playConfetti();
                 this.showToast(`🎉 +10 points bonus applied to ${groupName}`, 'success');
                 break;
             }
@@ -493,7 +777,6 @@ class JungleRewardsSystem {
 
         const data = this.getData();
         
-        // Reset all points to 0
         for (const [className, levels] of Object.entries(data)) {
             for (const [level, groups] of Object.entries(levels)) {
                 for (const [groupName, groupData] of Object.entries(groups)) {
@@ -505,10 +788,7 @@ class JungleRewardsSystem {
             }
         }
         
-        // Save reset data
         this.saveData(data);
-        
-        // Reload display
         this.loadInitialData();
         
         this.showToast('✅ All points have been reset to zero', 'success');
@@ -524,7 +804,6 @@ class JungleRewardsSystem {
             return;
         }
 
-        // Reset to original complete data
         localStorage.removeItem(this.storageKey);
         this.initializeData();
         this.loadInitialData();
@@ -532,6 +811,7 @@ class JungleRewardsSystem {
         this.showToast('✅ System reinitialized with original data', 'success');
     }
 
+    // ========== UI UPDATES ==========
     updateLastUpdated() {
         const lastUpdatedElement = document.getElementById('lastUpdated');
         if (lastUpdatedElement) {
@@ -583,13 +863,14 @@ class JungleRewardsSystem {
         if (appContainer) {
             if (isAuthenticated) {
                 appContainer.classList.add('authenticated');
-                this.showToast('Teacher mode activated', 'success');
+                this.showToast('🔓 Teacher mode activated', 'success');
             } else {
                 appContainer.classList.remove('authenticated');
             }
         }
     }
 
+    // ========== VIEW MANAGEMENT ==========
     switchView(view) {
         this.currentView = view;
         const viewButtons = document.querySelectorAll('.view-btn');
@@ -618,6 +899,99 @@ class JungleRewardsSystem {
         this.loadInitialData();
     }
 
+    switchPage(page) {
+        document.querySelectorAll('.page').forEach(p => {
+            p.classList.remove('active');
+        });
+
+        const targetPage = document.getElementById(`${page}Page`);
+        if (targetPage) {
+            targetPage.classList.add('active');
+        }
+
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.remove('active');
+            if (link.dataset.page === page) {
+                link.classList.add('active');
+            }
+        });
+
+        if (page === 'dashboard') {
+            this.loadInitialData();
+        } else if (page === 'leaderboard') {
+            this.loadLeaderboardData();
+        }
+
+        this.showToast(`Navigated to ${page.charAt(0).toUpperCase() + page.slice(1)}`, 'info');
+    }
+
+    loadLeaderboardData(classFilter = 'all') {
+        const groupsContent = document.getElementById('groupsLeaderboardContent');
+        if (!groupsContent) return;
+
+        const data = this.getData();
+        let groupsList = [];
+
+        for (const [className, levels] of Object.entries(data)) {
+            if (classFilter !== 'all' && className !== classFilter) continue;
+            
+            for (const [level, groups] of Object.entries(levels)) {
+                for (const [groupName, groupData] of Object.entries(groups)) {
+                    groupsList.push({
+                        name: groupName,
+                        class: className,
+                        level: level,
+                        points: groupData.totalPoints || 0,
+                        members: groupData.members ? groupData.members.length : 0
+                    });
+                }
+            }
+        }
+
+        groupsList.sort((a, b) => b.points - a.points);
+
+        let groupsHtml = '';
+        groupsList.forEach((group, index) => {
+            const rankClass = index < 3 ? `rank-${index + 1}` : '';
+            const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+            
+            groupsHtml += `
+                <div class="leaderboard-item">
+                    <div class="rank ${rankClass}">${medal} ${index + 1}</div>
+                    <div class="leaderboard-info">
+                        <div class="leaderboard-name">
+                            ${group.name}
+                            <span class="group-badge">${group.class}</span>
+                        </div>
+                        <div class="leaderboard-meta">
+                            ${group.level} • ${group.members} members
+                        </div>
+                    </div>
+                    <div class="leaderboard-points">${group.points}</div>
+                </div>
+            `;
+        });
+
+        groupsContent.innerHTML = groupsHtml || '<div class="loading-leaderboard"><i class="fas fa-spinner fa-spin"></i><p>Loading rankings...</p></div>';
+    }
+
+    switchTab(tab) {
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.tab === tab) {
+                btn.classList.add('active');
+            }
+        });
+
+        document.querySelectorAll('.leaderboard-tab').forEach(tabElement => {
+            tabElement.classList.remove('active');
+            if (tabElement.id === `${tab}Leaderboard`) {
+                tabElement.classList.add('active');
+            }
+        });
+    }
+
+    // ========== MODAL MANAGEMENT ==========
     showModal(modalId) {
         const modal = document.getElementById(modalId);
         if (modal) {
@@ -634,6 +1008,7 @@ class JungleRewardsSystem {
         }
     }
 
+    // ========== NOTIFICATION SYSTEM ==========
     showToast(message, type = 'info') {
         const container = document.getElementById('toastContainer');
         if (!container) return;
@@ -652,7 +1027,6 @@ class JungleRewardsSystem {
 
         container.appendChild(toast);
 
-        // Auto remove after 5 seconds
         setTimeout(() => {
             if (toast.parentElement) {
                 toast.remove();
@@ -670,31 +1044,13 @@ class JungleRewardsSystem {
         return icons[type] || 'info-circle';
     }
 
-    hideLoadingScreen() {
-        const loadingScreen = document.getElementById('loadingScreen');
-        const appContainer = document.getElementById('app');
-        
-        if (loadingScreen && appContainer) {
-            loadingScreen.style.opacity = '0';
-            loadingScreen.style.pointerEvents = 'none';
-            
-            setTimeout(() => {
-                loadingScreen.style.display = 'none';
-                appContainer.classList.remove('hidden');
-                
-                setTimeout(() => {
-                    appContainer.style.opacity = '1';
-                }, 50);
-            }, 500);
-        }
-    }
-
+    // ========== AUTHENTICATION ==========
     verifyAdminPassword(password) {
         if (password === 'jungle123') {
             this.isAuthenticated = true;
             localStorage.setItem('jungleAuthenticated', 'true');
             this.toggleAuthState(true);
-            this.showToast('Admin access granted!', 'success');
+            this.showToast('🔓 Admin access granted!', 'success');
             this.hideModal('loginModal');
             return true;
         } else {
@@ -710,6 +1066,27 @@ class JungleRewardsSystem {
         this.showToast('Logged out successfully', 'info');
     }
 
+    // ========== LOADING SCREEN ==========
+    hideLoadingScreen() {
+        const loadingScreen = document.getElementById('loadingScreen');
+        const appContainer = document.getElementById('app');
+        
+        if (loadingScreen && appContainer) {
+            loadingScreen.style.opacity = '0';
+            loadingScreen.style.pointerEvents = 'none';
+            
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+                appContainer.classList.remove('hidden');
+                
+                setTimeout(() => {
+                    appContainer.style.opacity = '1';
+                }, 50);
+            }, 800);
+        }
+    }
+
+    // ========== EVENT LISTENERS ==========
     setupEventListeners() {
         console.log('🔧 Setting up event listeners...');
         
@@ -721,6 +1098,14 @@ class JungleRewardsSystem {
                 this.switchPage(page);
             });
         });
+
+        // Theme toggle
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+            themeToggle.addEventListener('click', () => {
+                this.toggleTheme();
+            });
+        }
 
         // Class selector
         const classSelector = document.getElementById('classSelector');
@@ -796,6 +1181,7 @@ class JungleRewardsSystem {
         if (refreshBtn) {
             refreshBtn.addEventListener('click', () => {
                 this.loadInitialData();
+                this.showToast('Data refreshed', 'success');
             });
         }
 
@@ -862,105 +1248,7 @@ class JungleRewardsSystem {
         console.log('✅ Event listeners setup complete');
     }
 
-    switchPage(page) {
-        // Hide all pages
-        document.querySelectorAll('.page').forEach(p => {
-            p.classList.remove('active');
-        });
-
-        // Show target page
-        const targetPage = document.getElementById(`${page}Page`);
-        if (targetPage) {
-            targetPage.classList.add('active');
-        }
-
-        // Update navigation
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.classList.remove('active');
-            if (link.dataset.page === page) {
-                link.classList.add('active');
-            }
-        });
-
-        // Load page-specific data
-        if (page === 'dashboard') {
-            this.loadInitialData();
-        } else if (page === 'leaderboard') {
-            this.loadLeaderboardData();
-        }
-
-        this.showToast(`Navigated to ${page.charAt(0).toUpperCase() + page.slice(1)}`, 'info');
-    }
-
-    loadLeaderboardData(classFilter = 'all') {
-        const groupsContent = document.getElementById('groupsLeaderboardContent');
-        if (!groupsContent) return;
-
-        const data = this.getData();
-        let groupsList = [];
-
-        for (const [className, levels] of Object.entries(data)) {
-            if (classFilter !== 'all' && className !== classFilter) continue;
-            
-            for (const [level, groups] of Object.entries(levels)) {
-                for (const [groupName, groupData] of Object.entries(groups)) {
-                    groupsList.push({
-                        name: groupName,
-                        class: className,
-                        level: level,
-                        points: groupData.totalPoints || 0,
-                        members: groupData.members ? groupData.members.length : 0
-                    });
-                }
-            }
-        }
-
-        // Sort by points
-        groupsList.sort((a, b) => b.points - a.points);
-
-        let groupsHtml = '';
-        groupsList.forEach((group, index) => {
-            const rankClass = index < 3 ? `rank-${index + 1}` : '';
-            const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
-            
-            groupsHtml += `
-                <div class="leaderboard-item">
-                    <div class="rank ${rankClass}">${medal} ${index + 1}</div>
-                    <div class="leaderboard-info">
-                        <div class="leaderboard-name">
-                            ${group.name}
-                            <span class="group-badge">${group.class}</span>
-                        </div>
-                        <div class="leaderboard-meta">
-                            ${group.level} • ${group.members} members
-                        </div>
-                    </div>
-                    <div class="leaderboard-points">${group.points}</div>
-                </div>
-            `;
-        });
-
-        groupsContent.innerHTML = groupsHtml;
-    }
-
-    switchTab(tab) {
-        // Update tab buttons
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.dataset.tab === tab) {
-                btn.classList.add('active');
-            }
-        });
-
-        // Update tab content
-        document.querySelectorAll('.leaderboard-tab').forEach(tabElement => {
-            tabElement.classList.remove('active');
-            if (tabElement.id === `${tab}Leaderboard`) {
-                tabElement.classList.add('active');
-            }
-        });
-    }
-
+    // ========== DATA EXPORT ==========
     exportData() {
         const data = this.getData();
         const dataStr = JSON.stringify(data, null, 2);
@@ -981,7 +1269,7 @@ class JungleRewardsSystem {
 
 // Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🌿 DOM loaded - initializing Jungle Rewards System');
+    console.log('🌿 DOM loaded - initializing Futuristic Jungle Rewards System');
     window.app = new JungleRewardsSystem();
 });
 
