@@ -1,0 +1,13 @@
+{
+  "name": "jungle-rewards-system",
+  "version": "1.0.0",
+  "description": "Static HTML/CSS/JS site",
+  "scripts": {
+    "build": "echo 'No build process needed for static site'",
+    "dev": "echo 'Static site - no dev server needed'"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module"
+}
