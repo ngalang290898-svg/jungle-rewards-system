@@ -151,6 +151,7 @@ class JungleRewardsSystem {
     this.isAuthenticated = false;
     this.storageKey = 'jungleRewardsData';
     this.currentTheme = 'dark';
+    this.loadingTimeout = null;
   }
 
   // Initialize the application
@@ -160,7 +161,6 @@ class JungleRewardsSystem {
     try {
       this.initializeData();
       this.initializeTheme();
-      this.setupEventListeners();
       
       // Check for existing authentication
       const savedAuth = localStorage.getItem('jungleAuthenticated');
@@ -169,6 +169,7 @@ class JungleRewardsSystem {
         this.toggleAuthState(true);
       }
 
+      this.setupEventListeners();
       this.loadInitialData();
       this.updateQuestProgress();
       
@@ -178,6 +179,7 @@ class JungleRewardsSystem {
       console.error('❌ Error during app initialization:', error);
       this.showToast('Error initializing app. Please refresh the page.', 'error');
     } finally {
+      // Always hide loading screen with fallback
       this.hideLoadingScreen();
     }
   }
@@ -214,14 +216,21 @@ class JungleRewardsSystem {
     });
 
     // Theme toggle
-    document.getElementById('themeToggle').addEventListener('click', () => {
-      this.toggleTheme();
-    });
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) {
+      themeToggle.addEventListener('click', () => {
+        this.toggleTheme();
+      });
+    }
 
     // Class selector
-    document.getElementById('classSelector').addEventListener('change', (e) => {
-      this.switchClass(e.target.value);
-    });
+    const classSelector = document.getElementById('classSelector');
+    if (classSelector) {
+      classSelector.value = this.currentClass;
+      classSelector.addEventListener('change', (e) => {
+        this.switchClass(e.target.value);
+      });
+    }
 
     // Leaderboard class selector
     const leaderboardClassSelector = document.getElementById('leaderboardClassSelector');
@@ -247,57 +256,95 @@ class JungleRewardsSystem {
     });
 
     // Login button
-    document.getElementById('loginBtn').addEventListener('click', () => {
-      this.showModal('loginModal');
-    });
+    const loginBtn = document.getElementById('loginBtn');
+    if (loginBtn) {
+      loginBtn.addEventListener('click', () => {
+        this.showModal('loginModal');
+      });
+    }
 
     // Logout button
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-      this.logout();
-    });
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        this.logout();
+      });
+    }
 
     // Login form submission
-    document.getElementById('submitLogin').addEventListener('click', () => {
-      const password = document.getElementById('adminPassword').value.trim();
-      if (password) {
-        this.verifyAdminPassword(password);
-      } else {
-        this.showToast('Please enter password', 'warning');
-      }
-    });
+    const submitLogin = document.getElementById('submitLogin');
+    const adminPassword = document.getElementById('adminPassword');
+    
+    if (submitLogin && adminPassword) {
+      submitLogin.addEventListener('click', () => {
+        const password = adminPassword.value.trim();
+        if (password) {
+          this.verifyAdminPassword(password);
+        } else {
+          this.showToast('Please enter password', 'warning');
+        }
+      });
+
+      adminPassword.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          submitLogin.click();
+        }
+      });
+    }
 
     // Refresh button
-    document.getElementById('refreshData').addEventListener('click', () => {
-      this.loadInitialData();
-      this.updateQuestProgress();
-      this.showToast('Data refreshed', 'success');
-    });
+    const refreshBtn = document.getElementById('refreshData');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', () => {
+        this.loadInitialData();
+        this.updateQuestProgress();
+        this.showToast('Data refreshed', 'success');
+      });
+    }
 
     // Admin buttons
-    document.getElementById('resetAllPoints').addEventListener('click', () => {
-      this.resetAllPoints();
-    });
+    const resetBtn = document.getElementById('resetAllPoints');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        this.resetAllPoints();
+      });
+    }
 
-    document.getElementById('initializeData').addEventListener('click', () => {
-      this.initializeSystemData();
-    });
+    const initBtn = document.getElementById('initializeData');
+    if (initBtn) {
+      initBtn.addEventListener('click', () => {
+        this.initializeSystemData();
+      });
+    }
 
-    document.getElementById('exportData').addEventListener('click', () => {
-      this.exportData();
-    });
+    const exportBtn = document.getElementById('exportData');
+    if (exportBtn) {
+      exportBtn.addEventListener('click', () => {
+        this.exportData();
+      });
+    }
 
     // Teacher overlay
-    document.getElementById('teacherOverlayTrigger').addEventListener('click', () => {
-      this.toggleTeacherOverlay();
-    });
+    const teacherTrigger = document.getElementById('teacherOverlayTrigger');
+    if (teacherTrigger) {
+      teacherTrigger.addEventListener('click', () => {
+        this.toggleTeacherOverlay();
+      });
+    }
 
-    document.getElementById('closeTeacherOverlay').addEventListener('click', () => {
-      this.hideTeacherOverlay();
-    });
+    const closeOverlay = document.getElementById('closeTeacherOverlay');
+    if (closeOverlay) {
+      closeOverlay.addEventListener('click', () => {
+        this.hideTeacherOverlay();
+      });
+    }
 
-    document.getElementById('overlayQuickBonus').addEventListener('click', () => {
-      this.applyQuickBonus();
-    });
+    const quickBonus = document.getElementById('overlayQuickBonus');
+    if (quickBonus) {
+      quickBonus.addEventListener('click', () => {
+        this.applyQuickBonus();
+      });
+    }
 
     // Modal close buttons
     document.querySelectorAll('.close-modal').forEach(btn => {
@@ -705,10 +752,15 @@ class JungleRewardsSystem {
     const progressPercent = Math.min(100, (totalCrystals / nextMilestone.points) * 100);
 
     // Update display elements
-    document.getElementById('currentCrystals').textContent = totalCrystals;
-    document.getElementById('nextMilestone').textContent = nextMilestone.points;
-    document.getElementById('progressPercent').textContent = `${Math.round(progressPercent)}%`;
-    document.getElementById('questProgressFill').style.width = `${progressPercent}%`;
+    const currentCrystals = document.getElementById('currentCrystals');
+    const nextMilestoneEl = document.getElementById('nextMilestone');
+    const progressPercentEl = document.getElementById('progressPercent');
+    const questProgressFill = document.getElementById('questProgressFill');
+
+    if (currentCrystals) currentCrystals.textContent = totalCrystals;
+    if (nextMilestoneEl) nextMilestoneEl.textContent = nextMilestone.points;
+    if (progressPercentEl) progressPercentEl.textContent = `${Math.round(progressPercent)}%`;
+    if (questProgressFill) questProgressFill.style.width = `${progressPercent}%`;
 
     // Update mascot message
     this.updateMascotMessage(totalCrystals, milestones);
@@ -747,6 +799,7 @@ class JungleRewardsSystem {
   // Update mascot message
   updateMascotMessage(currentPoints, milestones) {
     const mascotMessage = document.getElementById('mascotMessage');
+    if (!mascotMessage) return;
     
     let achievedMilestone = null;
     for (const milestone of milestones) {
@@ -784,7 +837,7 @@ class JungleRewardsSystem {
   // Teacher overlay functions
   toggleTeacherOverlay() {
     const overlay = document.getElementById('teacherOverlay');
-    if (overlay.classList.contains('hidden')) {
+    if (overlay && overlay.classList.contains('hidden')) {
       this.showTeacherOverlay();
     } else {
       this.hideTeacherOverlay();
@@ -793,13 +846,17 @@ class JungleRewardsSystem {
 
   showTeacherOverlay() {
     const overlay = document.getElementById('teacherOverlay');
-    overlay.classList.remove('hidden');
-    this.updateTeacherOverlayStats();
+    if (overlay) {
+      overlay.classList.remove('hidden');
+      this.updateTeacherOverlayStats();
+    }
   }
 
   hideTeacherOverlay() {
     const overlay = document.getElementById('teacherOverlay');
-    overlay.classList.add('hidden');
+    if (overlay) {
+      overlay.classList.add('hidden');
+    }
   }
 
   updateTeacherOverlayStats() {
@@ -816,8 +873,11 @@ class JungleRewardsSystem {
       }
     }
 
-    document.getElementById('overlayTotalPoints').textContent = totalPoints;
-    document.getElementById('overlayActiveStudents').textContent = totalStudents;
+    const totalPointsEl = document.getElementById('overlayTotalPoints');
+    const activeStudentsEl = document.getElementById('overlayActiveStudents');
+
+    if (totalPointsEl) totalPointsEl.textContent = totalPoints;
+    if (activeStudentsEl) activeStudentsEl.textContent = totalStudents;
   }
 
   applyQuickBonus() {
@@ -913,7 +973,7 @@ class JungleRewardsSystem {
       
       groupsHtml += `
         <div class="leaderboard-item">
-          <div class="rank">${meday: '🥉' : ''} ${index + 1}</div>
+          <div class="rank">${medal} ${index + 1}</div>
           <div class="leaderboard-info">
             <div class="leaderboard-name">
               ${group.name}
@@ -1041,17 +1101,58 @@ class JungleRewardsSystem {
     return icons[type] || 'info-circle';
   }
 
-  // Loading screen
+  // Loading screen - FIXED VERSION
   hideLoadingScreen() {
+    console.log('🎬 Hiding loading screen...');
+    
     const loadingScreen = document.getElementById('loadingScreen');
     const appContainer = document.getElementById('app');
     
     if (loadingScreen && appContainer) {
-      appContainer.classList.remove('hidden');
+      // Clear any existing timeout
+      if (this.loadingTimeout) {
+        clearTimeout(this.loadingTimeout);
+      }
       
+      // Set a fallback timeout to ensure loading screen hides
+      this.loadingTimeout = setTimeout(() => {
+        console.log('⏰ Fallback: Force hiding loading screen');
+        if (loadingScreen.style.display !== 'none') {
+          loadingScreen.style.display = 'none';
+          appContainer.classList.remove('hidden');
+          this.showToast('Welcome to the Magical Jungle! 🌿', 'success');
+        }
+      }, 3000); // 3 second fallback
+      
+      // Try to hide normally first
+      try {
+        appContainer.classList.remove('hidden');
+        
+        // Add fade out animation
+        loadingScreen.style.opacity = '0';
+        loadingScreen.style.transition = 'opacity 0.5s ease';
+        
+        setTimeout(() => {
+          loadingScreen.style.display = 'none';
+          console.log('✅ Loading screen hidden successfully');
+          this.showToast('Welcome to the Magical Jungle! 🌿', 'success');
+          
+          // Clear the fallback timeout since we succeeded
+          if (this.loadingTimeout) {
+            clearTimeout(this.loadingTimeout);
+          }
+        }, 500);
+        
+      } catch (error) {
+        console.error('❌ Error hiding loading screen:', error);
+        // Fallback will handle it
+      }
+    } else {
+      console.error('❌ Could not find loading screen or app container');
+      // Emergency fallback
       setTimeout(() => {
-        loadingScreen.style.display = 'none';
-        this.showToast('Welcome to the Magical Jungle! 🌿', 'success');
+        if (appContainer) appContainer.classList.remove('hidden');
+        if (loadingScreen) loadingScreen.style.display = 'none';
       }, 1000);
     }
   }
@@ -1072,8 +1173,37 @@ let app;
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log('🌿 DOM loaded - initializing Jungle Rewards System');
-  app = new JungleRewardsSystem();
-  app.initializeApp();
+  
+  // Add a safety timeout to ensure the app loads even if there are issues
+  const safetyTimeout = setTimeout(() => {
+    const loadingScreen = document.getElementById('loadingScreen');
+    const appContainer = document.getElementById('app');
+    
+    if (loadingScreen && loadingScreen.style.display !== 'none') {
+      console.log('🆘 Safety timeout triggered - forcing app to show');
+      loadingScreen.style.display = 'none';
+      if (appContainer) appContainer.classList.remove('hidden');
+    }
+  }, 5000); // 5 second absolute maximum
+  
+  try {
+    app = new JungleRewardsSystem();
+    app.initializeApp();
+    
+    // Clear safety timeout if app initializes successfully
+    clearTimeout(safetyTimeout);
+  } catch (error) {
+    console.error('❌ Fatal error during app initialization:', error);
+    
+    // Emergency recovery
+    const loadingScreen = document.getElementById('loadingScreen');
+    const appContainer = document.getElementById('app');
+    
+    if (loadingScreen) loadingScreen.style.display = 'none';
+    if (appContainer) appContainer.classList.remove('hidden');
+    
+    clearTimeout(safetyTimeout);
+  }
 });
 
 // Global functions for HTML onclick handlers
