@@ -3,9 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jungle × Magical - Premium Reward System</title>
-  <meta name="description" content="Futuristic gamified classroom reward system for ELTC Malaysia Remedial Instruction">
+  <title>Jungle × Magical - Premium ESL Reward System for Year 4 Students</title>
+  <meta name="description" content="Futuristic gamified classroom reward system for ELTC Malaysia Remedial Instruction. Track student progress, award crystals, and motivate Year 4 ESL learners.">
   <meta name="theme-color" content="#00ffc3">
+  
+  <!-- SEO Meta Tags -->
+  <meta name="keywords" content="ESL, rewards system, classroom management, gamification, Year 4 students, ELTC Malaysia, remedial instruction">
+  <meta name="author" content="ELTC Malaysia">
+  <meta name="robots" content="index, follow">
+  
+  <!-- Open Graph Meta Tags -->
+  <meta property="og:title" content="Jungle × Magical - ESL Reward System">
+  <meta property="og:description" content="Transform your ESL classroom with our futuristic gamified reward system for Year 4 students.">
+  <meta property="og:type" content="website">
   
   <!-- Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -13,35 +23,35 @@
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   
-  <!-- Three.js for 3D Background -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- Three.js for 3D Background (Deferred) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
   
   <!-- Styles -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <!-- WebGL Background Container -->
-  <div id="webgl-container" class="webgl-background"></div>
+  <div id="webgl-container" class="webgl-background" aria-hidden="true"></div>
 
   <!-- Particle Overlay -->
-  <div id="particle-overlay" class="particle-overlay"></div>
+  <div id="particle-overlay" class="particle-overlay" aria-hidden="true"></div>
 
   <!-- Fixed Loading Screen -->
-  <div id="loadingScreen" class="loading-screen">
+  <div id="loadingScreen" class="loading-screen" role="status" aria-live="polite">
     <div class="loading-content">
       <div class="premium-logo">
         <div class="logo-icon">
-          <i class="fas fa-crown"></i>
+          <i class="fas fa-crown" aria-hidden="true"></i>
         </div>
         <h1 class="logo-title">Jungle × Magical</h1>
         <p class="logo-subtitle">ELTC Malaysia Remedial Rewards</p>
       </div>
       <div class="loading-animation">
         <div class="animal-loader">
-          <div class="animal-icon tiger"><i class="fas fa-paw"></i></div>
-          <div class="animal-icon fox"><i class="fas fa-paw"></i></div>
-          <div class="animal-icon eagle"><i class="fas fa-feather-alt"></i></div>
-          <div class="animal-icon monkey"><i class="fas fa-paw"></i></div>
+          <div class="animal-icon tiger"><i class="fas fa-paw" aria-hidden="true"></i></div>
+          <div class="animal-icon fox"><i class="fas fa-paw" aria-hidden="true"></i></div>
+          <div class="animal-icon eagle"><i class="fas fa-feather-alt" aria-hidden="true"></i></div>
+          <div class="animal-icon monkey"><i class="fas fa-paw" aria-hidden="true"></i></div>
         </div>
         <div class="progress-container">
           <div class="progress-bar">
@@ -56,10 +66,10 @@
   <!-- Main App -->
   <div id="app" class="app-container hidden">
     <!-- Premium Navigation -->
-    <nav class="premium-nav">
+    <nav class="premium-nav" role="navigation" aria-label="Main navigation">
       <div class="nav-brand">
         <div class="brand-icon">
-          <i class="fas fa-crown"></i>
+          <i class="fas fa-crown" aria-hidden="true"></i>
         </div>
         <div class="brand-text">
           <span class="brand-title">Jungle × Magical</span>
@@ -68,21 +78,21 @@
       </div>
       
       <div class="nav-center">
-        <div class="nav-links">
-          <button class="nav-link active" data-page="home">
-            <i class="fas fa-home"></i>
+        <div class="nav-links" role="menubar">
+          <button class="nav-link active" data-page="home" role="menuitem" aria-current="page">
+            <i class="fas fa-home" aria-hidden="true"></i>
             <span>Home</span>
           </button>
-          <button class="nav-link" data-page="dashboard">
-            <i class="fas fa-chart-network"></i>
+          <button class="nav-link" data-page="dashboard" role="menuitem">
+            <i class="fas fa-chart-network" aria-hidden="true"></i>
             <span>Dashboard</span>
           </button>
-          <button class="nav-link" data-page="leaderboard">
-            <i class="fas fa-trophy"></i>
+          <button class="nav-link" data-page="leaderboard" role="menuitem">
+            <i class="fas fa-trophy" aria-hidden="true"></i>
             <span>Leaderboard</span>
           </button>
-          <button class="nav-link admin-only" data-page="admin">
-            <i class="fas fa-user-shield"></i>
+          <button class="nav-link admin-only" data-page="admin" role="menuitem">
+            <i class="fas fa-user-shield" aria-hidden="true"></i>
             <span>Admin</span>
           </button>
         </div>
@@ -90,31 +100,31 @@
 
       <div class="nav-actions">
         <div class="theme-toggle">
-          <button id="themeToggle" class="theme-btn" title="Toggle theme">
-            <i class="fas fa-moon"></i>
+          <button id="themeToggle" class="theme-btn" title="Toggle theme" aria-label="Toggle dark and light mode">
+            <i class="fas fa-moon" aria-hidden="true"></i>
           </button>
         </div>
         <div class="class-selector premium-select">
-          <i class="fas fa-graduation-cap"></i>
-          <select id="classSelector">
+          <i class="fas fa-graduation-cap" aria-hidden="true"></i>
+          <select id="classSelector" aria-label="Select class">
             <option value="4 Pearl">4 Pearl</option>
             <option value="4 Crystal">4 Crystal</option>
           </select>
         </div>
-        <button class="login-btn premium-btn" id="loginBtn">
-          <i class="fas fa-key"></i>
+        <button class="login-btn premium-btn" id="loginBtn" aria-label="Teacher login">
+          <i class="fas fa-key" aria-hidden="true"></i>
           <span>Teacher Login</span>
         </button>
         <div class="user-info admin-only" id="userInfo">
           <div class="user-avatar">
-            <i class="fas fa-user-tie"></i>
+            <i class="fas fa-user-tie" aria-hidden="true"></i>
           </div>
           <div class="user-details">
             <span class="user-name">Teacher</span>
             <span class="user-status">Admin</span>
           </div>
-          <button class="logout-btn" id="logoutBtn">
-            <i class="fas fa-sign-out-alt"></i>
+          <button class="logout-btn" id="logoutBtn" aria-label="Logout">
+            <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
           </button>
         </div>
       </div>
@@ -122,20 +132,20 @@
 
     <!-- View Toggle -->
     <div class="view-toggle-container">
-      <div class="view-toggle" id="viewToggle">
-        <button class="view-btn active" data-view="visitor">
-          <i class="fas fa-eye"></i>
+      <div class="view-toggle" role="tablist" aria-label="View mode selection">
+        <button class="view-btn active" data-view="visitor" role="tab" aria-selected="true">
+          <i class="fas fa-eye" aria-hidden="true"></i>
           Visitor View
         </button>
-        <button class="view-btn" data-view="teacher">
-          <i class="fas fa-chalkboard-teacher"></i>
+        <button class="view-btn" data-view="teacher" role="tab" aria-selected="false">
+          <i class="fas fa-chalkboard-teacher" aria-hidden="true"></i>
           Teacher View
         </button>
       </div>
     </div>
 
     <!-- Main Content -->
-    <main class="main-content">
+    <main class="main-content" role="main">
       <!-- Home Page -->
       <div id="homePage" class="page active">
         <div class="home-page">
