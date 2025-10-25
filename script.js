@@ -150,30 +150,38 @@ class JungleRewardsSystem {
         this.isAuthenticated = false;
         this.storageKey = 'jungleRewardsData';
         this.currentTheme = 'dark';
-        
-        this.initializeApp();
+        this.initialized = false;
     }
 
     // ========== INITIALIZATION ==========
     initializeApp() {
         console.log('🚀 Initializing Futuristic Jungle Rewards System...');
         
-        this.initializeData();
-        this.initializeTheme();
-        this.initializeBackground();
-        
-        // Check for existing authentication
-        const savedAuth = localStorage.getItem('jungleAuthenticated');
-        if (savedAuth === 'true') {
-            this.isAuthenticated = true;
-            this.toggleAuthState(true);
-        }
+        try {
+            this.initializeData();
+            this.initializeTheme();
+            this.initializeBackground();
+            
+            // Check for existing authentication
+            const savedAuth = localStorage.getItem('jungleAuthenticated');
+            if (savedAuth === 'true') {
+                this.isAuthenticated = true;
+                this.toggleAuthState(true);
+            }
 
-        this.loadInitialData();
-        this.setupEventListeners();
-        this.hideLoadingScreen();
-        
-        this.showToast('Welcome to the Magical Jungle! 🌿', 'success');
+            this.loadInitialData();
+            this.setupEventListeners();
+            
+            console.log('✅ App initialized successfully');
+            this.initialized = true;
+            
+        } catch (error) {
+            console.error('❌ Error during app initialization:', error);
+            this.showToast('Error initializing app. Please refresh the page.', 'error');
+        } finally {
+            // Always hide loading screen, even if there's an error
+            this.hideLoadingScreen();
+        }
     }
 
     initializeData() {
@@ -181,7 +189,7 @@ class JungleRewardsSystem {
         
         if (!storedData) {
             localStorage.setItem(this.storageKey, JSON.stringify(COMPLETE_DATA));
-            this.showToast('✨ System initialized with all student data', 'success');
+            console.log('✨ System initialized with all student data');
         }
     }
 
@@ -216,7 +224,10 @@ class JungleRewardsSystem {
     // ========== BACKGROUND ANIMATIONS ==========
     setupParticleBackground() {
         const container = document.getElementById('particle-overlay');
-        if (!container) return;
+        if (!container) {
+            console.warn('Particle overlay container not found');
+            return;
+        }
 
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
@@ -295,7 +306,15 @@ class JungleRewardsSystem {
 
     setupWebGLBackground() {
         const container = document.getElementById('webgl-container');
-        if (!container || !window.THREE) return;
+        if (!container) {
+            console.warn('WebGL container not found');
+            return;
+        }
+        
+        if (!window.THREE) {
+            console.warn('Three.js not loaded');
+            return;
+        }
 
         try {
             const scene = new THREE.Scene();
@@ -454,39 +473,11 @@ class JungleRewardsSystem {
             </div>
         `;
 
-        // Add styles
-        rewardElement.style.cssText = `
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0);
-            background: rgba(0, 255, 195, 0.1);
-            backdrop-filter: blur(20px);
-            border: 2px solid rgba(0, 255, 195, 0.3);
-            border-radius: 20px;
-            padding: 2rem;
-            text-align: center;
-            z-index: 1001;
-            animation: rewardPop 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
-        `;
-
         container.appendChild(rewardElement);
-
-        // Add CSS animation
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes rewardPop {
-                0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-                70% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
-                100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-            }
-        `;
-        document.head.appendChild(style);
 
         // Remove after animation
         setTimeout(() => {
             rewardElement.remove();
-            style.remove();
         }, 3000);
     }
 
@@ -598,6 +589,12 @@ class JungleRewardsSystem {
     }
 
     showGroupModal(className, groupName, level, students) {
+        // Remove existing modal if any
+        const existingModal = document.getElementById('groupModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
         const modalHTML = `
             <div class="modal" id="groupModal">
                 <div class="modal-content premium-modal">
@@ -660,7 +657,6 @@ class JungleRewardsSystem {
         document.body.insertAdjacentHTML('beforeend', modalHTML);
         
         const modal = document.getElementById('groupModal');
-        modal.classList.remove('hidden');
         
         modal.querySelector('.close-modal').addEventListener('click', () => {
             modal.remove();
@@ -1068,21 +1064,37 @@ class JungleRewardsSystem {
 
     // ========== LOADING SCREEN ==========
     hideLoadingScreen() {
+        console.log('🎬 Hiding loading screen...');
+        
         const loadingScreen = document.getElementById('loadingScreen');
         const appContainer = document.getElementById('app');
         
         if (loadingScreen && appContainer) {
+            // First, show the app container
+            appContainer.classList.remove('hidden');
+            
+            // Then fade out the loading screen
             loadingScreen.style.opacity = '0';
-            loadingScreen.style.pointerEvents = 'none';
+            loadingScreen.style.transition = 'opacity 0.8s ease';
             
             setTimeout(() => {
                 loadingScreen.style.display = 'none';
-                appContainer.classList.remove('hidden');
+                console.log('✅ Loading screen hidden');
                 
-                setTimeout(() => {
-                    appContainer.style.opacity = '1';
-                }, 50);
+                // Show welcome toast
+                this.showToast('Welcome to the Magical Jungle! 🌿', 'success');
             }, 800);
+        } else {
+            console.error('❌ Could not find loading screen or app container');
+            // Fallback: force show app after timeout
+            setTimeout(() => {
+                if (appContainer) {
+                    appContainer.classList.remove('hidden');
+                }
+                if (loadingScreen) {
+                    loadingScreen.style.display = 'none';
+                }
+            }, 2000);
         }
     }
 
@@ -1090,162 +1102,166 @@ class JungleRewardsSystem {
     setupEventListeners() {
         console.log('🔧 Setting up event listeners...');
         
-        // Navigation
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const page = e.currentTarget.dataset.page;
-                this.switchPage(page);
-            });
-        });
-
-        // Theme toggle
-        const themeToggle = document.getElementById('themeToggle');
-        if (themeToggle) {
-            themeToggle.addEventListener('click', () => {
-                this.toggleTheme();
-            });
-        }
-
-        // Class selector
-        const classSelector = document.getElementById('classSelector');
-        if (classSelector) {
-            classSelector.value = this.currentClass;
-            classSelector.addEventListener('change', (e) => {
-                this.switchClass(e.target.value);
-            });
-        }
-
-        // Leaderboard class selector
-        const leaderboardClassSelector = document.getElementById('leaderboardClassSelector');
-        if (leaderboardClassSelector) {
-            leaderboardClassSelector.addEventListener('change', (e) => {
-                this.loadLeaderboardData(e.target.value);
-            });
-        }
-
-        // View toggle
-        document.querySelectorAll('.view-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                this.switchView(e.currentTarget.dataset.view);
-            });
-        });
-
-        // Tab buttons
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const tab = e.currentTarget.dataset.tab;
-                this.switchTab(tab);
-            });
-        });
-
-        // Login button
-        const loginBtn = document.getElementById('loginBtn');
-        if (loginBtn) {
-            loginBtn.addEventListener('click', () => {
-                this.showModal('loginModal');
-            });
-        }
-
-        // Logout button
-        const logoutBtn = document.getElementById('logoutBtn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', () => {
-                this.logout();
-            });
-        }
-
-        // Login form submission
-        const submitLogin = document.getElementById('submitLogin');
-        const adminPassword = document.getElementById('adminPassword');
-        
-        if (submitLogin && adminPassword) {
-            submitLogin.addEventListener('click', () => {
-                const password = adminPassword.value.trim();
-                if (password) {
-                    this.verifyAdminPassword(password);
-                } else {
-                    this.showToast('Please enter password', 'warning');
-                }
-            });
-
-            adminPassword.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    submitLogin.click();
-                }
-            });
-        }
-
-        // Refresh button
-        const refreshBtn = document.getElementById('refreshData');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', () => {
-                this.loadInitialData();
-                this.showToast('Data refreshed', 'success');
-            });
-        }
-
-        // Admin buttons
-        const resetBtn = document.getElementById('resetAllPoints');
-        if (resetBtn) {
-            resetBtn.addEventListener('click', () => {
-                this.resetAllPoints();
-            });
-        }
-
-        const initBtn = document.getElementById('initializeData');
-        if (initBtn) {
-            initBtn.addEventListener('click', () => {
-                this.initializeSystemData();
-            });
-        }
-
-        const exportBtn = document.getElementById('exportData');
-        if (exportBtn) {
-            exportBtn.addEventListener('click', () => {
-                this.exportData();
-            });
-        }
-
-        // Modal close buttons
-        document.querySelectorAll('.close-modal').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const modal = e.target.closest('.modal');
-                if (modal) {
-                    this.hideModal(modal.id);
-                }
-            });
-        });
-
-        // Close modals on background click
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    this.hideModal(modal.id);
-                }
-            });
-        });
-
-        // Escape key to close modals
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                this.hideModal('loginModal');
-                const groupModal = document.getElementById('groupModal');
-                if (groupModal) groupModal.remove();
-            }
-        });
-
-        // Home page CTA buttons
-        document.querySelectorAll('[data-page]').forEach(btn => {
-            if (btn.closest('.hero-actions')) {
-                btn.addEventListener('click', (e) => {
+        try {
+            // Navigation
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
                     const page = e.currentTarget.dataset.page;
                     this.switchPage(page);
                 });
-            }
-        });
+            });
 
-        console.log('✅ Event listeners setup complete');
+            // Theme toggle
+            const themeToggle = document.getElementById('themeToggle');
+            if (themeToggle) {
+                themeToggle.addEventListener('click', () => {
+                    this.toggleTheme();
+                });
+            }
+
+            // Class selector
+            const classSelector = document.getElementById('classSelector');
+            if (classSelector) {
+                classSelector.value = this.currentClass;
+                classSelector.addEventListener('change', (e) => {
+                    this.switchClass(e.target.value);
+                });
+            }
+
+            // Leaderboard class selector
+            const leaderboardClassSelector = document.getElementById('leaderboardClassSelector');
+            if (leaderboardClassSelector) {
+                leaderboardClassSelector.addEventListener('change', (e) => {
+                    this.loadLeaderboardData(e.target.value);
+                });
+            }
+
+            // View toggle
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    this.switchView(e.currentTarget.dataset.view);
+                });
+            });
+
+            // Tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const tab = e.currentTarget.dataset.tab;
+                    this.switchTab(tab);
+                });
+            });
+
+            // Login button
+            const loginBtn = document.getElementById('loginBtn');
+            if (loginBtn) {
+                loginBtn.addEventListener('click', () => {
+                    this.showModal('loginModal');
+                });
+            }
+
+            // Logout button
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', () => {
+                    this.logout();
+                });
+            }
+
+            // Login form submission
+            const submitLogin = document.getElementById('submitLogin');
+            const adminPassword = document.getElementById('adminPassword');
+            
+            if (submitLogin && adminPassword) {
+                submitLogin.addEventListener('click', () => {
+                    const password = adminPassword.value.trim();
+                    if (password) {
+                        this.verifyAdminPassword(password);
+                    } else {
+                        this.showToast('Please enter password', 'warning');
+                    }
+                });
+
+                adminPassword.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        submitLogin.click();
+                    }
+                });
+            }
+
+            // Refresh button
+            const refreshBtn = document.getElementById('refreshData');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', () => {
+                    this.loadInitialData();
+                    this.showToast('Data refreshed', 'success');
+                });
+            }
+
+            // Admin buttons
+            const resetBtn = document.getElementById('resetAllPoints');
+            if (resetBtn) {
+                resetBtn.addEventListener('click', () => {
+                    this.resetAllPoints();
+                });
+            }
+
+            const initBtn = document.getElementById('initializeData');
+            if (initBtn) {
+                initBtn.addEventListener('click', () => {
+                    this.initializeSystemData();
+                });
+            }
+
+            const exportBtn = document.getElementById('exportData');
+            if (exportBtn) {
+                exportBtn.addEventListener('click', () => {
+                    this.exportData();
+                });
+            }
+
+            // Modal close buttons
+            document.querySelectorAll('.close-modal').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const modal = e.target.closest('.modal');
+                    if (modal) {
+                        this.hideModal(modal.id);
+                    }
+                });
+            });
+
+            // Close modals on background click
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        this.hideModal(modal.id);
+                    }
+                });
+            });
+
+            // Escape key to close modals
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    this.hideModal('loginModal');
+                    const groupModal = document.getElementById('groupModal');
+                    if (groupModal) groupModal.remove();
+                }
+            });
+
+            // Home page CTA buttons
+            document.querySelectorAll('[data-page]').forEach(btn => {
+                if (btn.closest('.hero-actions')) {
+                    btn.addEventListener('click', (e) => {
+                        const page = e.currentTarget.dataset.page;
+                        this.switchPage(page);
+                    });
+                }
+            });
+
+            console.log('✅ Event listeners setup complete');
+        } catch (error) {
+            console.error('❌ Error setting up event listeners:', error);
+        }
     }
 
     // ========== DATA EXPORT ==========
@@ -1267,12 +1283,51 @@ class JungleRewardsSystem {
     }
 }
 
-// Initialize the app when DOM is loaded
+// Initialize the app when DOM is loaded with error handling
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🌿 DOM loaded - initializing Futuristic Jungle Rewards System');
-    window.app = new JungleRewardsSystem();
+    
+    try {
+        window.app = new JungleRewardsSystem();
+        window.app.initializeApp();
+        
+        // Fallback: if app still not initialized after 10 seconds, force hide loading
+        setTimeout(() => {
+            const loadingScreen = document.getElementById('loadingScreen');
+            const appContainer = document.getElementById('app');
+            
+            if (loadingScreen && loadingScreen.style.display !== 'none') {
+                console.warn('⚠️ Force-hiding loading screen after timeout');
+                loadingScreen.style.display = 'none';
+                if (appContainer) {
+                    appContainer.classList.remove('hidden');
+                }
+            }
+        }, 10000);
+        
+    } catch (error) {
+        console.error('❌ Fatal error during app initialization:', error);
+        
+        // Emergency fallback
+        const loadingScreen = document.getElementById('loadingScreen');
+        const appContainer = document.getElementById('app');
+        
+        if (loadingScreen) loadingScreen.style.display = 'none';
+        if (appContainer) appContainer.classList.remove('hidden');
+        
+        alert('Error loading application. Please refresh the page.');
+    }
 });
 
 // Add utility functions to global scope
-window.switchPage = (page) => window.app.switchPage(page);
-window.switchView = (view) => window.app.switchView(view);
+window.switchPage = (page) => {
+    if (window.app) {
+        window.app.switchPage(page);
+    }
+};
+
+window.switchView = (view) => {
+    if (window.app) {
+        window.app.switchView(view);
+    }
+};
