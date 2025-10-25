@@ -1,0 +1,10 @@
+{
+  "name": "jungle-rewards-system",
+  "version": "1.0.0",
+  "description": "Premium gamified classroom reward system",
+  "type": "module",
+  "scripts": {
+    "dev": "echo 'No dev server needed'",
+    "start": "echo 'No start server needed'"
+  }
+}
