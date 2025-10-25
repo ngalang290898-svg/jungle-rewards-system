@@ -196,6 +196,9 @@ class JungleRewardsSystem {
             this.loadInitialData();
             this.setupEventListeners();
             
+            // Load homepage specific data
+            this.loadTopTeams();
+            
             console.log('✅ App initialized successfully');
             this.initialized = true;
             
@@ -430,6 +433,82 @@ class JungleRewardsSystem {
         } catch (error) {
             console.log('WebGL not supported, falling back to particles');
             this.setupParticleBackground();
+        }
+    }
+
+    // ========== HOMEPAGE SPECIFIC FUNCTIONALITY ==========
+
+    /**
+     * Load top teams for homepage featured section
+     */
+    loadTopTeams() {
+        const teamsShowcase = document.getElementById('teamsShowcase');
+        if (!teamsShowcase) return;
+
+        const data = this.getData();
+        let allTeams = [];
+
+        // Collect all teams
+        for (const [className, levels] of Object.entries(data)) {
+            for (const [level, groups] of Object.entries(levels)) {
+                for (const [groupName, groupData] of Object.entries(groups)) {
+                    allTeams.push({
+                        name: groupName,
+                        class: className,
+                        level: level,
+                        points: groupData.totalPoints || 0,
+                        members: groupData.members ? groupData.members.length : 0
+                    });
+                }
+            }
+        }
+
+        // Sort by points and take top 3
+        allTeams.sort((a, b) => b.points - a.points);
+        const topTeams = allTeams.slice(0, 3);
+
+        let teamsHtml = '';
+        
+        if (topTeams.length > 0) {
+            topTeams.forEach((team, index) => {
+                const isChampion = index === 0;
+                teamsHtml += `
+                    <div class="featured-team ${isChampion ? 'champion' : ''}">
+                        <div class="team-rank">${index + 1}</div>
+                        <div class="team-info">
+                            <div class="team-name">${team.name}</div>
+                            <div class="team-meta">
+                                <span>${team.class}</span>
+                                <span class="team-class">${team.level}</span>
+                                <span>${team.members} members</span>
+                            </div>
+                        </div>
+                        <div class="team-points">${team.points}</div>
+                    </div>
+                `;
+            });
+        } else {
+            teamsHtml = `
+                <div class="loading-teams">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>No team data available yet</p>
+                </div>
+            `;
+        }
+
+        teamsShowcase.innerHTML = teamsHtml;
+    }
+
+    /**
+     * Scroll to specific section on homepage
+     */
+    scrollToSection(sectionId) {
+        const section = document.getElementById(sectionId);
+        if (section) {
+            section.scrollIntoView({ 
+                behavior: 'smooth',
+                block: 'start'
+            });
         }
     }
 
@@ -991,6 +1070,8 @@ class JungleRewardsSystem {
             this.loadInitialData();
         } else if (page === 'leaderboard') {
             this.loadLeaderboardData();
+        } else if (page === 'home') {
+            this.loadTopTeams(); // Refresh top teams when returning to home
         }
 
         this.showToast(`Navigated to ${page.charAt(0).toUpperCase() + page.slice(1)}`, 'info');
@@ -1474,13 +1555,21 @@ class JungleRewardsSystem {
 
             // Home page CTA buttons
             document.querySelectorAll('[data-page]').forEach(btn => {
-                if (btn.closest('.hero-actions')) {
+                if (btn.closest('.hero-actions-new') || btn.closest('.cta-actions')) {
                     btn.addEventListener('click', (e) => {
                         const page = e.currentTarget.dataset.page;
                         this.switchPage(page);
                     });
                 }
             });
+
+            // How It Works button scroll
+            const howItWorksBtn = document.querySelector('[onclick*="scrollToSection"]');
+            if (howItWorksBtn) {
+                howItWorksBtn.addEventListener('click', () => {
+                    this.scrollToSection('how-it-works');
+                });
+            }
 
             console.log('✅ Event listeners setup complete');
         } catch (error) {
@@ -1553,14 +1642,22 @@ window.addEventListener('beforeunload', () => {
 
 // ========== GLOBAL UTILITY FUNCTIONS ==========
 
+window.app = window.app || {};
+
 window.switchPage = (page) => {
-    if (window.app) {
-        window.app.switchPage(page);
+    if (window.appInstance) {
+        window.appInstance.switchPage(page);
     }
 };
 
 window.switchView = (view) => {
-    if (window.app) {
-        window.app.switchView(view);
+    if (window.appInstance) {
+        window.appInstance.switchView(view);
+    }
+};
+
+window.scrollToSection = (sectionId) => {
+    if (window.appInstance) {
+        window.appInstance.scrollToSection(sectionId);
     }
 };
