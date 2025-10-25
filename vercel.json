@@ -1,8 +1,9 @@
 {
   "version": 2,
+  "framework": null,
   "builds": [
     {
-      "src": "*.html",
+      "src": "**/*",
       "use": "@vercel/static"
     }
   ],
@@ -11,5 +12,8 @@
       "src": "/(.*)",
       "dest": "/$1"
     }
-  ]
+  ],
+  "buildCommand": null,
+  "outputDirectory": ".",
+  "installCommand": "echo 'No dependencies to install'"
 }
