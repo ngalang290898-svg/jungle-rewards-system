@@ -143,6 +143,8 @@ const COMPLETE_DATA = {
   }
 };
 
+// ========== PERFORMANCE & ACCESSIBILITY ENHANCEMENTS ==========
+
 class JungleRewardsSystem {
     constructor() {
         this.currentClass = '4 Pearl';
@@ -151,9 +153,31 @@ class JungleRewardsSystem {
         this.storageKey = 'jungleRewardsData';
         this.currentTheme = 'dark';
         this.initialized = false;
+        this.animationFrameId = null;
+        
+        // Performance monitoring
+        this.lowPerformanceMode = this.detectLowPerformance();
+    }
+
+    // ========== PERFORMANCE OPTIMIZATIONS ==========
+    
+    /**
+     * Detect low-performance devices for optimized rendering
+     */
+    detectLowPerformance() {
+        // Check for low-end devices
+        const hasLowMemory = navigator.deviceMemory && navigator.deviceMemory < 4;
+        const hasLowCores = navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2;
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        return hasLowMemory || hasLowCores || isMobile;
     }
 
     // ========== INITIALIZATION ==========
+    
+    /**
+     * Main app initialization with error handling
+     */
     initializeApp() {
         console.log('🚀 Initializing Futuristic Jungle Rewards System...');
         
@@ -201,11 +225,22 @@ class JungleRewardsSystem {
     }
 
     initializeBackground() {
-        this.setupParticleBackground();
-        this.setupWebGLBackground();
+        if (this.lowPerformanceMode) {
+            console.log('🚀 Using lightweight background for better performance');
+            this.setupParticleBackground(); // Lightweight fallback
+            return;
+        }
+        
+        // Only load Three.js on capable devices
+        if (window.THREE) {
+            this.setupWebGLBackground();
+        } else {
+            this.setupParticleBackground();
+        }
     }
 
     // ========== THEME MANAGEMENT ==========
+    
     toggleTheme() {
         this.currentTheme = this.currentTheme === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', this.currentTheme);
@@ -222,6 +257,7 @@ class JungleRewardsSystem {
     }
 
     // ========== BACKGROUND ANIMATIONS ==========
+    
     setupParticleBackground() {
         const container = document.getElementById('particle-overlay');
         if (!container) {
@@ -319,29 +355,30 @@ class JungleRewardsSystem {
         try {
             const scene = new THREE.Scene();
             const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            const renderer = new THREE.WebGLRenderer({ 
+                alpha: true, 
+                antialias: !this.lowPerformanceMode // Disable antialiasing on low-perf devices
+            });
             
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setClearColor(0x000000, 0);
             container.appendChild(renderer.domElement);
 
-            // Create floating geometric shapes
+            // Simplified geometries for better performance
             const geometries = [
                 new THREE.IcosahedronGeometry(1, 0),
-                new THREE.OctahedronGeometry(1, 0),
-                new THREE.TetrahedronGeometry(1, 0)
+                new THREE.OctahedronGeometry(1, 0)
             ];
 
             const materials = [
                 new THREE.MeshBasicMaterial({ color: 0x00ffc3, wireframe: true }),
-                new THREE.MeshBasicMaterial({ color: 0x00a3ff, wireframe: true }),
-                new THREE.MeshBasicMaterial({ color: 0x8b5cf6, wireframe: true })
+                new THREE.MeshBasicMaterial({ color: 0x00a3ff, wireframe: true })
             ];
 
             const meshes = [];
+            const meshCount = this.lowPerformanceMode ? 4 : 8; // Reduce objects on low-perf
             
-            // Create multiple floating shapes
-            for (let i = 0; i < 8; i++) {
+            for (let i = 0; i < meshCount; i++) {
                 const geometry = geometries[Math.floor(Math.random() * geometries.length)];
                 const material = materials[Math.floor(Math.random() * materials.length)];
                 const mesh = new THREE.Mesh(geometry, material);
@@ -350,44 +387,54 @@ class JungleRewardsSystem {
                 mesh.position.y = (Math.random() - 0.5) * 20;
                 mesh.position.z = (Math.random() - 0.5) * 10;
                 
-                mesh.rotation.x = Math.random() * Math.PI;
-                mesh.rotation.y = Math.random() * Math.PI;
-                
                 scene.add(mesh);
                 meshes.push(mesh);
             }
 
             camera.position.z = 15;
 
-            function animate() {
-                requestAnimationFrame(animate);
-
-                meshes.forEach((mesh, index) => {
-                    mesh.rotation.x += 0.005;
-                    mesh.rotation.y += 0.008;
+            // Throttled animation loop
+            let lastTime = 0;
+            const fpsInterval = 1000 / 30; // Target 30 FPS
+            
+            const animate = (currentTime) => {
+                this.animationFrameId = requestAnimationFrame(animate);
+                
+                const delta = currentTime - lastTime;
+                if (delta > fpsInterval) {
+                    lastTime = currentTime - (delta % fpsInterval);
                     
-                    // Floating animation
-                    mesh.position.y += Math.sin(Date.now() * 0.001 + index) * 0.01;
-                });
+                    meshes.forEach((mesh, index) => {
+                        mesh.rotation.x += 0.005;
+                        mesh.rotation.y += 0.008;
+                        mesh.position.y += Math.sin(currentTime * 0.001 + index) * 0.01;
+                    });
 
-                renderer.render(scene, camera);
-            }
+                    renderer.render(scene, camera);
+                }
+            };
 
-            animate();
+            animate(0);
 
-            // Handle resize
+            // Optimized resize handler
+            let resizeTimeout;
             window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(() => {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                }, 250);
             });
 
         } catch (error) {
-            console.log('WebGL not supported, using fallback background');
+            console.log('WebGL not supported, falling back to particles');
+            this.setupParticleBackground();
         }
     }
 
     // ========== REWARD ANIMATIONS ==========
+    
     playConfetti() {
         const canvas = document.getElementById('confettiCanvas');
         if (!canvas) return;
@@ -482,13 +529,38 @@ class JungleRewardsSystem {
     }
 
     // ========== DATA MANAGEMENT ==========
+    
+    /**
+     * Safe data retrieval from LocalStorage with fallback
+     */
     getData() {
-        const storedData = localStorage.getItem(this.storageKey);
-        return storedData ? JSON.parse(storedData) : COMPLETE_DATA;
+        try {
+            const storedData = localStorage.getItem(this.storageKey);
+            if (storedData) {
+                return JSON.parse(storedData);
+            }
+        } catch (error) {
+            console.warn('LocalStorage read failed, using fallback data:', error);
+        }
+        
+        // Fallback to initial data
+        return this.getFallbackData();
+    }
+
+    getFallbackData() {
+        // Deep clone to prevent mutation of original data
+        return JSON.parse(JSON.stringify(COMPLETE_DATA));
     }
 
     saveData(data) {
-        localStorage.setItem(this.storageKey, JSON.stringify(data));
+        try {
+            localStorage.setItem(this.storageKey, JSON.stringify(data));
+            return true;
+        } catch (error) {
+            console.error('LocalStorage write failed:', error);
+            this.showToast('Failed to save data. Changes may be lost on refresh.', 'error');
+            return false;
+        }
     }
 
     loadInitialData() {
@@ -670,6 +742,7 @@ class JungleRewardsSystem {
     }
 
     // ========== POINT MANAGEMENT ==========
+    
     updateStudentPoints(studentName, pointsChange) {
         if (!this.isAuthenticated) {
             this.showToast('Please login as teacher first', 'warning');
@@ -808,6 +881,7 @@ class JungleRewardsSystem {
     }
 
     // ========== UI UPDATES ==========
+    
     updateLastUpdated() {
         const lastUpdatedElement = document.getElementById('lastUpdated');
         if (lastUpdatedElement) {
@@ -867,6 +941,7 @@ class JungleRewardsSystem {
     }
 
     // ========== VIEW MANAGEMENT ==========
+    
     switchView(view) {
         this.currentView = view;
         const viewButtons = document.querySelectorAll('.view-btn');
@@ -921,7 +996,17 @@ class JungleRewardsSystem {
         this.showToast(`Navigated to ${page.charAt(0).toUpperCase() + page.slice(1)}`, 'info');
     }
 
+    // ========== FIXED LEADERBOARD SYSTEM ==========
+    
+    /**
+     * Load both group and individual leaderboard data
+     */
     loadLeaderboardData(classFilter = 'all') {
+        this.loadGroupsLeaderboardData(classFilter);
+        this.loadIndividualsLeaderboardData(classFilter);
+    }
+
+    loadGroupsLeaderboardData(classFilter = 'all') {
         const groupsContent = document.getElementById('groupsLeaderboardContent');
         if (!groupsContent) return;
 
@@ -950,10 +1035,11 @@ class JungleRewardsSystem {
         groupsList.forEach((group, index) => {
             const rankClass = index < 3 ? `rank-${index + 1}` : '';
             const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+            const ariaLabel = `Rank ${index + 1}: ${group.name} with ${group.points} crystals`;
             
             groupsHtml += `
-                <div class="leaderboard-item">
-                    <div class="rank ${rankClass}">${medal} ${index + 1}</div>
+                <div class="leaderboard-item" role="listitem" aria-label="${ariaLabel}">
+                    <div class="rank ${rankClass}" aria-hidden="true">${medal} ${index + 1}</div>
                     <div class="leaderboard-info">
                         <div class="leaderboard-name">
                             ${group.name}
@@ -963,12 +1049,88 @@ class JungleRewardsSystem {
                             ${group.level} • ${group.members} members
                         </div>
                     </div>
-                    <div class="leaderboard-points">${group.points}</div>
+                    <div class="leaderboard-points" aria-label="${group.points} crystals">
+                        ${group.points}
+                    </div>
                 </div>
             `;
         });
 
-        groupsContent.innerHTML = groupsHtml || '<div class="loading-leaderboard"><i class="fas fa-spinner fa-spin"></i><p>Loading rankings...</p></div>';
+        groupsContent.innerHTML = groupsHtml || '<div class="loading-leaderboard"><p>No group data found</p></div>';
+        
+        // Announce update for screen readers
+        this.announceToScreenReader(`Groups leaderboard updated with ${groupsList.length} teams`);
+    }
+
+    /**
+     * FIXED: Individual leaderboard now properly shows all students
+     */
+    loadIndividualsLeaderboardData(classFilter = 'all') {
+        const individualsContent = document.getElementById('individualsLeaderboardContent');
+        if (!individualsContent) return;
+
+        const data = this.getData();
+        let allStudents = [];
+
+        // Collect all students with defensive data parsing
+        for (const [className, levels] of Object.entries(data)) {
+            if (classFilter !== 'all' && className !== classFilter) continue;
+            
+            for (const [level, groups] of Object.entries(levels)) {
+                for (const [groupName, groupData] of Object.entries(groups)) {
+                    // Safe member iteration
+                    const members = groupData.members || [];
+                    members.forEach(student => {
+                        if (student && student.name) {
+                            allStudents.push({
+                                name: student.name,
+                                points: student.points || 0, // Default to 0 if missing
+                                class: className,
+                                group: groupName,
+                                level: level
+                            });
+                        }
+                    });
+                }
+            }
+        }
+
+        // Sort by points (descending)
+        allStudents.sort((a, b) => b.points - a.points);
+
+        let individualsHtml = '';
+        if (allStudents.length > 0) {
+            allStudents.forEach((student, index) => {
+                const rankClass = index < 3 ? `rank-${index + 1}` : '';
+                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+                const ariaLabel = `Rank ${index + 1}: ${student.name} from ${student.group} with ${student.points} crystals`;
+                
+                individualsHtml += `
+                    <div class="leaderboard-item" role="listitem" aria-label="${ariaLabel}">
+                        <div class="rank ${rankClass}" aria-hidden="true">${medal} ${index + 1}</div>
+                        <div class="leaderboard-info">
+                            <div class="leaderboard-name">
+                                ${student.name}
+                                <span class="group-badge">${student.group}</span>
+                            </div>
+                            <div class="leaderboard-meta">
+                                ${student.class} • ${student.level}
+                            </div>
+                        </div>
+                        <div class="leaderboard-points" aria-label="${student.points} crystals">
+                            ${student.points}
+                        </div>
+                    </div>
+                `;
+            });
+        } else {
+            individualsHtml = '<div class="loading-leaderboard"><p>No student data found</p></div>';
+        }
+
+        individualsContent.innerHTML = individualsHtml;
+        
+        // Announce update for screen readers
+        this.announceToScreenReader(`Individual leaderboard updated with ${allStudents.length} students`);
     }
 
     switchTab(tab) {
@@ -985,9 +1147,40 @@ class JungleRewardsSystem {
                 tabElement.classList.add('active');
             }
         });
+
+        // Load appropriate data when tab changes
+        const classFilter = document.getElementById('leaderboardClassSelector')?.value || 'all';
+        if (tab === 'groups') {
+            this.loadGroupsLeaderboardData(classFilter);
+        } else if (tab === 'individuals') {
+            this.loadIndividualsLeaderboardData(classFilter);
+        }
+
+        this.announceToScreenReader(`Switched to ${tab} leaderboard view`);
+    }
+
+    // ========== ACCESSIBILITY ENHANCEMENTS ==========
+    
+    /**
+     * Announce updates to screen readers
+     */
+    announceToScreenReader(message) {
+        // Create aria-live region for screen reader announcements
+        let liveRegion = document.getElementById('a11y-live-region');
+        if (!liveRegion) {
+            liveRegion = document.createElement('div');
+            liveRegion.id = 'a11y-live-region';
+            liveRegion.setAttribute('aria-live', 'polite');
+            liveRegion.setAttribute('aria-atomic', 'true');
+            liveRegion.style.cssText = 'position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden;';
+            document.body.appendChild(liveRegion);
+        }
+        
+        liveRegion.textContent = message;
     }
 
     // ========== MODAL MANAGEMENT ==========
+    
     showModal(modalId) {
         const modal = document.getElementById(modalId);
         if (modal) {
@@ -1005,6 +1198,7 @@ class JungleRewardsSystem {
     }
 
     // ========== NOTIFICATION SYSTEM ==========
+    
     showToast(message, type = 'info') {
         const container = document.getElementById('toastContainer');
         if (!container) return;
@@ -1041,6 +1235,7 @@ class JungleRewardsSystem {
     }
 
     // ========== AUTHENTICATION ==========
+    
     verifyAdminPassword(password) {
         if (password === 'jungle123') {
             this.isAuthenticated = true;
@@ -1063,6 +1258,7 @@ class JungleRewardsSystem {
     }
 
     // ========== LOADING SCREEN ==========
+    
     hideLoadingScreen() {
         console.log('🎬 Hiding loading screen...');
         
@@ -1099,21 +1295,42 @@ class JungleRewardsSystem {
     }
 
     // ========== EVENT LISTENERS ==========
+    
+    /**
+     * Safe event listener setup with error handling
+     */
     setupEventListeners() {
         console.log('🔧 Setting up event listeners...');
         
+        // Safe DOM query helper
+        const safeQuery = (selector, context = document) => {
+            const element = context.querySelector(selector);
+            if (!element) {
+                console.warn(`Element not found: ${selector}`);
+            }
+            return element;
+        };
+
         try {
-            // Navigation
+            // Enhanced navigation with keyboard support
             document.querySelectorAll('.nav-link').forEach(link => {
                 link.addEventListener('click', (e) => {
                     e.preventDefault();
                     const page = e.currentTarget.dataset.page;
                     this.switchPage(page);
                 });
+                
+                // Keyboard accessibility
+                link.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        link.click();
+                    }
+                });
             });
 
             // Theme toggle
-            const themeToggle = document.getElementById('themeToggle');
+            const themeToggle = safeQuery('#themeToggle');
             if (themeToggle) {
                 themeToggle.addEventListener('click', () => {
                     this.toggleTheme();
@@ -1121,7 +1338,7 @@ class JungleRewardsSystem {
             }
 
             // Class selector
-            const classSelector = document.getElementById('classSelector');
+            const classSelector = safeQuery('#classSelector');
             if (classSelector) {
                 classSelector.value = this.currentClass;
                 classSelector.addEventListener('change', (e) => {
@@ -1129,8 +1346,8 @@ class JungleRewardsSystem {
                 });
             }
 
-            // Leaderboard class selector
-            const leaderboardClassSelector = document.getElementById('leaderboardClassSelector');
+            // Leaderboard class selector with change detection
+            const leaderboardClassSelector = safeQuery('#leaderboardClassSelector');
             if (leaderboardClassSelector) {
                 leaderboardClassSelector.addEventListener('change', (e) => {
                     this.loadLeaderboardData(e.target.value);
@@ -1144,16 +1361,23 @@ class JungleRewardsSystem {
                 });
             });
 
-            // Tab buttons
+            // Tab buttons with keyboard navigation
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const tab = e.currentTarget.dataset.tab;
                     this.switchTab(tab);
                 });
+                
+                btn.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        btn.click();
+                    }
+                });
             });
 
             // Login button
-            const loginBtn = document.getElementById('loginBtn');
+            const loginBtn = safeQuery('#loginBtn');
             if (loginBtn) {
                 loginBtn.addEventListener('click', () => {
                     this.showModal('loginModal');
@@ -1161,7 +1385,7 @@ class JungleRewardsSystem {
             }
 
             // Logout button
-            const logoutBtn = document.getElementById('logoutBtn');
+            const logoutBtn = safeQuery('#logoutBtn');
             if (logoutBtn) {
                 logoutBtn.addEventListener('click', () => {
                     this.logout();
@@ -1169,8 +1393,8 @@ class JungleRewardsSystem {
             }
 
             // Login form submission
-            const submitLogin = document.getElementById('submitLogin');
-            const adminPassword = document.getElementById('adminPassword');
+            const submitLogin = safeQuery('#submitLogin');
+            const adminPassword = safeQuery('#adminPassword');
             
             if (submitLogin && adminPassword) {
                 submitLogin.addEventListener('click', () => {
@@ -1190,7 +1414,7 @@ class JungleRewardsSystem {
             }
 
             // Refresh button
-            const refreshBtn = document.getElementById('refreshData');
+            const refreshBtn = safeQuery('#refreshData');
             if (refreshBtn) {
                 refreshBtn.addEventListener('click', () => {
                     this.loadInitialData();
@@ -1199,21 +1423,21 @@ class JungleRewardsSystem {
             }
 
             // Admin buttons
-            const resetBtn = document.getElementById('resetAllPoints');
+            const resetBtn = safeQuery('#resetAllPoints');
             if (resetBtn) {
                 resetBtn.addEventListener('click', () => {
                     this.resetAllPoints();
                 });
             }
 
-            const initBtn = document.getElementById('initializeData');
+            const initBtn = safeQuery('#initializeData');
             if (initBtn) {
                 initBtn.addEventListener('click', () => {
                     this.initializeSystemData();
                 });
             }
 
-            const exportBtn = document.getElementById('exportData');
+            const exportBtn = safeQuery('#exportData');
             if (exportBtn) {
                 exportBtn.addEventListener('click', () => {
                     this.exportData();
@@ -1265,6 +1489,7 @@ class JungleRewardsSystem {
     }
 
     // ========== DATA EXPORT ==========
+    
     exportData() {
         const data = this.getData();
         const dataStr = JSON.stringify(data, null, 2);
@@ -1281,45 +1506,53 @@ class JungleRewardsSystem {
         
         this.showToast('Data exported successfully', 'success');
     }
+
+    // ========== RESOURCE CLEANUP ==========
+    
+    /**
+     * Clean up resources to prevent memory leaks
+     */
+    cleanup() {
+        // Cancel animation frames to prevent memory leaks
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+        }
+    }
 }
 
-// Initialize the app when DOM is loaded with error handling
+// ========== DEFERRED INITIALIZATION ==========
+
+let appInstance = null;
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🌿 DOM loaded - initializing Futuristic Jungle Rewards System');
     
-    try {
-        window.app = new JungleRewardsSystem();
-        window.app.initializeApp();
-        
-        // Fallback: if app still not initialized after 10 seconds, force hide loading
-        setTimeout(() => {
+    // Defer non-critical initialization
+    setTimeout(() => {
+        try {
+            appInstance = new JungleRewardsSystem();
+            appInstance.initializeApp();
+        } catch (error) {
+            console.error('❌ Fatal error during app initialization:', error);
+            // Emergency fallback
             const loadingScreen = document.getElementById('loadingScreen');
             const appContainer = document.getElementById('app');
             
-            if (loadingScreen && loadingScreen.style.display !== 'none') {
-                console.warn('⚠️ Force-hiding loading screen after timeout');
-                loadingScreen.style.display = 'none';
-                if (appContainer) {
-                    appContainer.classList.remove('hidden');
-                }
-            }
-        }, 10000);
-        
-    } catch (error) {
-        console.error('❌ Fatal error during app initialization:', error);
-        
-        // Emergency fallback
-        const loadingScreen = document.getElementById('loadingScreen');
-        const appContainer = document.getElementById('app');
-        
-        if (loadingScreen) loadingScreen.style.display = 'none';
-        if (appContainer) appContainer.classList.remove('hidden');
-        
-        alert('Error loading application. Please refresh the page.');
+            if (loadingScreen) loadingScreen.style.display = 'none';
+            if (appContainer) appContainer.classList.remove('hidden');
+        }
+    }, 100);
+});
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', () => {
+    if (appInstance) {
+        appInstance.cleanup();
     }
 });
 
-// Add utility functions to global scope
+// ========== GLOBAL UTILITY FUNCTIONS ==========
+
 window.switchPage = (page) => {
     if (window.app) {
         window.app.switchPage(page);
