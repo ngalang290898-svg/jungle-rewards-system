@@ -1,4 +1,4 @@
-// Complete Student Data - All 72 Students
+// Complete Student Data
 const COMPLETE_DATA = {
   "4 Pearl": {
     "Pre-A1": {
@@ -143,25 +143,584 @@ const COMPLETE_DATA = {
   }
 };
 
-// ========== MASCOT & QUEST SYSTEM ==========
-
-class MascotQuestSystem {
-  constructor(app) {
-    this.app = app;
-    this.milestones = [
-      { points: 20, name: "Waterfall", message: "Great start! You've reached the magical waterfall. Keep going!" },
-      { points: 40, name: "Ancient Temple", message: "Amazing! You discovered the ancient temple. Your English is getting stronger!" },
-      { points: 60, name: "Jungle Friends", message: "Fantastic! You've made new jungle friends. They're cheering for you!" },
-      { points: 100, name: "Jungle Champion", message: "Incredible! You're a true Jungle Champion! 🏆 Your English skills are shining!" }
-    ];
+// Main App Class
+class JungleRewardsSystem {
+  constructor() {
+    this.currentClass = '4 Pearl';
+    this.currentView = 'visitor';
+    this.isAuthenticated = false;
+    this.storageKey = 'jungleRewardsData';
+    this.currentTheme = 'dark';
   }
 
-  /**
-   * Calculate total crystals for current class
-   */
+  // Initialize the application
+  initializeApp() {
+    console.log('🚀 Initializing Jungle Rewards System...');
+    
+    try {
+      this.initializeData();
+      this.initializeTheme();
+      this.setupEventListeners();
+      
+      // Check for existing authentication
+      const savedAuth = localStorage.getItem('jungleAuthenticated');
+      if (savedAuth === 'true') {
+        this.isAuthenticated = true;
+        this.toggleAuthState(true);
+      }
+
+      this.loadInitialData();
+      this.updateQuestProgress();
+      
+      console.log('✅ App initialized successfully');
+      
+    } catch (error) {
+      console.error('❌ Error during app initialization:', error);
+      this.showToast('Error initializing app. Please refresh the page.', 'error');
+    } finally {
+      this.hideLoadingScreen();
+    }
+  }
+
+  // Initialize data storage
+  initializeData() {
+    let storedData = localStorage.getItem(this.storageKey);
+    
+    if (!storedData) {
+      localStorage.setItem(this.storageKey, JSON.stringify(COMPLETE_DATA));
+      console.log('✨ System initialized with all student data');
+    }
+  }
+
+  // Initialize theme
+  initializeTheme() {
+    const savedTheme = localStorage.getItem('jungleTheme') || 'dark';
+    this.currentTheme = savedTheme;
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    this.updateThemeIcon();
+  }
+
+  // Setup all event listeners
+  setupEventListeners() {
+    console.log('🔧 Setting up event listeners...');
+
+    // Navigation
+    document.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const page = e.currentTarget.dataset.page;
+        this.switchPage(page);
+      });
+    });
+
+    // Theme toggle
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      this.toggleTheme();
+    });
+
+    // Class selector
+    document.getElementById('classSelector').addEventListener('change', (e) => {
+      this.switchClass(e.target.value);
+    });
+
+    // Leaderboard class selector
+    const leaderboardClassSelector = document.getElementById('leaderboardClassSelector');
+    if (leaderboardClassSelector) {
+      leaderboardClassSelector.addEventListener('change', (e) => {
+        this.loadLeaderboardData(e.target.value);
+      });
+    }
+
+    // View toggle
+    document.querySelectorAll('.view-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        this.switchView(e.currentTarget.dataset.view);
+      });
+    });
+
+    // Tab buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const tab = e.currentTarget.dataset.tab;
+        this.switchTab(tab);
+      });
+    });
+
+    // Login button
+    document.getElementById('loginBtn').addEventListener('click', () => {
+      this.showModal('loginModal');
+    });
+
+    // Logout button
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      this.logout();
+    });
+
+    // Login form submission
+    document.getElementById('submitLogin').addEventListener('click', () => {
+      const password = document.getElementById('adminPassword').value.trim();
+      if (password) {
+        this.verifyAdminPassword(password);
+      } else {
+        this.showToast('Please enter password', 'warning');
+      }
+    });
+
+    // Refresh button
+    document.getElementById('refreshData').addEventListener('click', () => {
+      this.loadInitialData();
+      this.updateQuestProgress();
+      this.showToast('Data refreshed', 'success');
+    });
+
+    // Admin buttons
+    document.getElementById('resetAllPoints').addEventListener('click', () => {
+      this.resetAllPoints();
+    });
+
+    document.getElementById('initializeData').addEventListener('click', () => {
+      this.initializeSystemData();
+    });
+
+    document.getElementById('exportData').addEventListener('click', () => {
+      this.exportData();
+    });
+
+    // Teacher overlay
+    document.getElementById('teacherOverlayTrigger').addEventListener('click', () => {
+      this.toggleTeacherOverlay();
+    });
+
+    document.getElementById('closeTeacherOverlay').addEventListener('click', () => {
+      this.hideTeacherOverlay();
+    });
+
+    document.getElementById('overlayQuickBonus').addEventListener('click', () => {
+      this.applyQuickBonus();
+    });
+
+    // Modal close buttons
+    document.querySelectorAll('.close-modal').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const modal = e.target.closest('.modal');
+        if (modal) {
+          this.hideModal(modal.id);
+        }
+      });
+    });
+
+    // Close modals on background click
+    document.querySelectorAll('.modal').forEach(modal => {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          this.hideModal(modal.id);
+        }
+      });
+    });
+
+    // Page navigation buttons
+    document.querySelectorAll('[data-page]').forEach(btn => {
+      if (btn.classList.contains('hero-cta-new') || 
+          btn.classList.contains('premium-btn') ||
+          btn.classList.contains('cta-button-final') ||
+          btn.classList.contains('overlay-btn')) {
+        btn.addEventListener('click', (e) => {
+          const page = e.currentTarget.dataset.page;
+          this.switchPage(page);
+        });
+      }
+    });
+
+    // Escape key to close modals
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        this.hideModal('loginModal');
+        this.hideTeacherOverlay();
+      }
+      
+      // Teacher overlay shortcut (Shift + T)
+      if (e.shiftKey && e.key === 'T') {
+        e.preventDefault();
+        this.toggleTeacherOverlay();
+      }
+    });
+
+    console.log('✅ Event listeners setup complete');
+  }
+
+  // Toggle theme
+  toggleTheme() {
+    this.currentTheme = this.currentTheme === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', this.currentTheme);
+    localStorage.setItem('jungleTheme', this.currentTheme);
+    this.updateThemeIcon();
+    this.showToast(`Theme switched to ${this.currentTheme}`, 'info');
+  }
+
+  updateThemeIcon() {
+    const themeIcon = document.querySelector('#themeToggle i');
+    if (themeIcon) {
+      themeIcon.className = this.currentTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+    }
+  }
+
+  // Switch between pages
+  switchPage(page) {
+    document.querySelectorAll('.page').forEach(p => {
+      p.classList.remove('active');
+    });
+
+    document.querySelectorAll('.nav-link').forEach(link => {
+      link.classList.remove('active');
+      if (link.dataset.page === page) {
+        link.classList.add('active');
+      }
+    });
+
+    const targetPage = document.getElementById(`${page}Page`);
+    if (targetPage) {
+      targetPage.classList.add('active');
+    }
+
+    // Page-specific initialization
+    if (page === 'dashboard') {
+      this.loadInitialData();
+    } else if (page === 'leaderboard') {
+      this.loadLeaderboardData();
+    } else if (page === 'home') {
+      this.updateQuestProgress();
+    }
+
+    this.showToast(`Navigated to ${page.charAt(0).toUpperCase() + page.slice(1)}`, 'info');
+  }
+
+  // Switch class
+  switchClass(className) {
+    this.currentClass = className;
+    const classDisplay = document.getElementById('currentClassDisplay');
+    if (classDisplay) {
+      classDisplay.innerHTML = `<i class="fas fa-graduation-cap"></i> ${className}`;
+    }
+    
+    this.loadInitialData();
+    this.updateQuestProgress();
+  }
+
+  // Switch view
+  switchView(view) {
+    this.currentView = view;
+    const viewButtons = document.querySelectorAll('.view-btn');
+    
+    viewButtons.forEach(btn => {
+      btn.classList.remove('active');
+      if (btn.dataset.view === view) {
+        btn.classList.add('active');
+      }
+    });
+
+    if (view === 'teacher' && !this.isAuthenticated) {
+      this.showModal('loginModal');
+    } else {
+      this.showToast(`Switched to ${view} view`, 'info');
+    }
+  }
+
+  // Switch tabs
+  switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.classList.remove('active');
+      if (btn.dataset.tab === tab) {
+        btn.classList.add('active');
+      }
+    });
+
+    document.querySelectorAll('.leaderboard-tab').forEach(tabElement => {
+      tabElement.classList.remove('active');
+      if (tabElement.id === `${tab}Leaderboard`) {
+        tabElement.classList.add('active');
+      }
+    });
+
+    const classFilter = document.getElementById('leaderboardClassSelector')?.value || 'all';
+    if (tab === 'groups') {
+      this.loadGroupsLeaderboardData(classFilter);
+    } else if (tab === 'individuals') {
+      this.loadIndividualsLeaderboardData(classFilter);
+    }
+  }
+
+  // Scroll to section
+  scrollToSection(sectionId) {
+    const section = document.getElementById(sectionId);
+    if (section) {
+      section.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  }
+
+  // Get data from storage
+  getData() {
+    try {
+      const storedData = localStorage.getItem(this.storageKey);
+      if (storedData) {
+        return JSON.parse(storedData);
+      }
+    } catch (error) {
+      console.warn('LocalStorage read failed, using fallback data');
+    }
+    
+    return JSON.parse(JSON.stringify(COMPLETE_DATA));
+  }
+
+  // Save data to storage
+  saveData(data) {
+    try {
+      localStorage.setItem(this.storageKey, JSON.stringify(data));
+      return true;
+    } catch (error) {
+      console.error('LocalStorage write failed:', error);
+      this.showToast('Failed to save data.', 'error');
+      return false;
+    }
+  }
+
+  // Load initial data
+  loadInitialData() {
+    const data = this.getData();
+    this.updateGroupsDisplay(data);
+    this.updateLastUpdated();
+    this.updateSystemStats(data);
+  }
+
+  // Update groups display
+  updateGroupsDisplay(groupsData) {
+    const groupsGrid = document.getElementById('groupsGrid');
+    
+    if (!groupsGrid) return;
+
+    let html = '';
+    let totalGroups = 0;
+
+    for (const [className, levels] of Object.entries(groupsData)) {
+      if (className !== this.currentClass) continue;
+      
+      for (const [level, groups] of Object.entries(levels)) {
+        for (const [groupName, groupData] of Object.entries(groups)) {
+          totalGroups++;
+          
+          const groupPoints = groupData.totalPoints || 0;
+          const memberCount = groupData.members ? groupData.members.length : 0;
+          
+          html += `
+            <div class="group-card">
+              <div class="group-header">
+                <div class="group-name">${groupName}</div>
+                <div class="group-level">
+                  <i class="fas fa-layer-group"></i>
+                  ${level} • ${className}
+                </div>
+              </div>
+              
+              <div class="group-stats">
+                <div class="points-display">
+                  <div class="points-icon">
+                    <i class="fas fa-gem"></i>
+                  </div>
+                  <div class="points-info">
+                    <div class="points-value">${groupPoints}</div>
+                    <div class="points-label">Crystals</div>
+                  </div>
+                </div>
+                <div class="member-count">
+                  <i class="fas fa-users"></i>
+                  ${memberCount} members
+                </div>
+              </div>
+              
+              <div class="group-actions">
+                <button class="group-action-btn view-members" 
+                        onclick="app.showGroupMembers('${className}', '${groupName}', '${level}')">
+                  <i class="fas fa-list"></i>
+                  View Members
+                </button>
+                ${this.isAuthenticated ? `
+                <button class="group-action-btn group-bonus" 
+                        onclick="app.applyGroupBonus('${groupName}', '${className}')">
+                  <i class="fas fa-star"></i>
+                  +10 Bonus
+                </button>
+                ` : ''}
+              </div>
+            </div>
+          `;
+        }
+      }
+    }
+
+    groupsGrid.innerHTML = html || `
+      <div class="loading-groups">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Discovering jungle tribes...</p>
+      </div>
+    `;
+  }
+
+  // Show group members modal
+  showGroupMembers(className, groupName, level) {
+    const data = this.getData();
+    const groupData = data[className]?.[level]?.[groupName];
+    
+    if (!groupData) {
+      this.showToast('Group data not found', 'error');
+      return;
+    }
+
+    // For now, just show a toast. In a full implementation, this would open a modal.
+    this.showToast(`Viewing members of ${groupName}`, 'info');
+  }
+
+  // Apply group bonus
+  applyGroupBonus(groupName, className) {
+    if (!this.isAuthenticated) {
+      this.showToast('Please login as teacher first', 'warning');
+      return;
+    }
+
+    this.showToast(`+10 bonus applied to ${groupName}`, 'success');
+  }
+
+  // Update student points
+  updateStudentPoints(studentName, pointsChange) {
+    if (!this.isAuthenticated) {
+      this.showToast('Please login as teacher first', 'warning');
+      return;
+    }
+
+    this.showToast(`${pointsChange} points updated for ${studentName}`, 'success');
+  }
+
+  // Reset all points
+  resetAllPoints() {
+    if (!this.isAuthenticated) {
+      this.showToast('Please login as teacher first', 'warning');
+      return;
+    }
+
+    if (!confirm('Are you sure you want to reset ALL points to zero?')) {
+      return;
+    }
+
+    this.showToast('All points have been reset', 'success');
+  }
+
+  // Initialize system data
+  initializeSystemData() {
+    if (!this.isAuthenticated) {
+      this.showToast('Please login as teacher first', 'warning');
+      return;
+    }
+
+    localStorage.removeItem(this.storageKey);
+    this.initializeData();
+    this.loadInitialData();
+    
+    this.showToast('System reinitialized with original data', 'success');
+  }
+
+  // Export data
+  exportData() {
+    const data = this.getData();
+    const dataStr = JSON.stringify(data, null, 2);
+    const dataBlob = new Blob([dataStr], {type: 'application/json'});
+    
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'jungle-rewards-data.json';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    this.showToast('Data exported successfully', 'success');
+  }
+
+  // Update last updated time
+  updateLastUpdated() {
+    const lastUpdatedElement = document.getElementById('lastUpdated');
+    if (lastUpdatedElement) {
+      const now = new Date();
+      lastUpdatedElement.textContent = `Updated: ${now.toLocaleTimeString()}`;
+    }
+  }
+
+  // Update system stats
+  updateSystemStats(data) {
+    const systemStats = document.getElementById('systemStats');
+    if (!systemStats) return;
+
+    let totalStudents = 0;
+    let totalCrystals = 0;
+    let totalGroups = 0;
+
+    for (const [className, levels] of Object.entries(data)) {
+      for (const [level, groups] of Object.entries(levels)) {
+        for (const [groupName, groupData] of Object.entries(groups)) {
+          totalGroups++;
+          totalStudents += groupData.members.length;
+          totalCrystals += groupData.totalPoints;
+        }
+      }
+    }
+
+    systemStats.innerHTML = `
+      <div class="stat-item">
+        <i class="fas fa-users"></i>
+        <span>Total Students: ${totalStudents}</span>
+      </div>
+      <div class="stat-item">
+        <i class="fas fa-gem"></i>
+        <span>Total Crystals: ${totalCrystals}</span>
+      </div>
+      <div class="stat-item">
+        <i class="fas fa-layer-group"></i>
+        <span>Active Groups: ${totalGroups}</span>
+      </div>
+    `;
+  }
+
+  // Update quest progress
+  updateQuestProgress() {
+    const totalCrystals = this.calculateClassTotal();
+    const milestones = [
+      { points: 20, name: "Waterfall" },
+      { points: 40, name: "Ancient Temple" },
+      { points: 60, name: "Jungle Friends" },
+      { points: 100, name: "Jungle Champion" }
+    ];
+
+    const nextMilestone = this.getNextMilestone(totalCrystals, milestones);
+    const progressPercent = Math.min(100, (totalCrystals / nextMilestone.points) * 100);
+
+    // Update display elements
+    document.getElementById('currentCrystals').textContent = totalCrystals;
+    document.getElementById('nextMilestone').textContent = nextMilestone.points;
+    document.getElementById('progressPercent').textContent = `${Math.round(progressPercent)}%`;
+    document.getElementById('questProgressFill').style.width = `${progressPercent}%`;
+
+    // Update mascot message
+    this.updateMascotMessage(totalCrystals, milestones);
+
+    // Update milestone unlocks
+    this.updateMilestoneUnlocks(totalCrystals, milestones);
+  }
+
+  // Calculate total crystals for current class
   calculateClassTotal() {
-    const data = this.app.getData();
-    const currentClass = this.app.currentClass;
+    const data = this.getData();
+    const currentClass = this.currentClass;
     let totalCrystals = 0;
 
     if (data[currentClass]) {
@@ -175,77 +734,44 @@ class MascotQuestSystem {
     return totalCrystals;
   }
 
-  /**
-   * Update quest progress display
-   */
-  updateQuestProgress() {
-    const totalCrystals = this.calculateClassTotal();
-    const nextMilestone = this.getNextMilestone(totalCrystals);
-    const progressPercent = Math.min(100, (totalCrystals / nextMilestone.points) * 100);
-
-    // Update display elements
-    document.getElementById('currentCrystals').textContent = totalCrystals;
-    document.getElementById('nextMilestone').textContent = nextMilestone.points;
-    document.getElementById('progressPercent').textContent = `${Math.round(progressPercent)}%`;
-    document.getElementById('questProgressFill').style.width = `${progressPercent}%`;
-
-    // Update mascot message
-    this.updateMascotMessage(totalCrystals);
-
-    // Update milestone unlocks
-    this.updateMilestoneUnlocks(totalCrystals);
-  }
-
-  /**
-   * Get the next milestone to achieve
-   */
-  getNextMilestone(currentPoints) {
-    for (const milestone of this.milestones) {
+  // Get next milestone
+  getNextMilestone(currentPoints, milestones) {
+    for (const milestone of milestones) {
       if (currentPoints < milestone.points) {
         return milestone;
       }
     }
-    // If all milestones achieved, return the last one
-    return this.milestones[this.milestones.length - 1];
+    return milestones[milestones.length - 1];
   }
 
-  /**
-   * Update mascot speech bubble with appropriate message
-   */
-  updateMascotMessage(currentPoints) {
+  // Update mascot message
+  updateMascotMessage(currentPoints, milestones) {
     const mascotMessage = document.getElementById('mascotMessage');
     
-    // Find the highest achieved milestone
     let achievedMilestone = null;
-    for (const milestone of this.milestones) {
+    for (const milestone of milestones) {
       if (currentPoints >= milestone.points) {
         achievedMilestone = milestone;
       }
     }
 
     if (achievedMilestone && currentPoints === achievedMilestone.points) {
-      // Just reached a milestone
-      mascotMessage.textContent = achievedMilestone.message;
-      this.celebrateMilestone(achievedMilestone.name);
+      mascotMessage.textContent = `Great! You've reached the ${achievedMilestone.name}!`;
     } else if (achievedMilestone) {
-      // Passed a milestone
-      const nextMilestone = this.getNextMilestone(currentPoints);
-      mascotMessage.textContent = `You've unlocked ${achievedMilestone.name}! Next stop: ${nextMilestone.name} at ${nextMilestone.points} crystals.`;
+      const nextMilestone = this.getNextMilestone(currentPoints, milestones);
+      mascotMessage.textContent = `You've unlocked ${achievedMilestone.name}! Next: ${nextMilestone.name} at ${nextMilestone.points} crystals.`;
     } else {
-      // No milestones yet
-      const firstMilestone = this.milestones[0];
-      mascotMessage.textContent = `Let's start our jungle adventure! Earn ${firstMilestone.points} crystals to reach the ${firstMilestone.name}.`;
+      const firstMilestone = milestones[0];
+      mascotMessage.textContent = `Let's start our adventure! Earn ${firstMilestone.points} crystals to reach the ${firstMilestone.name}.`;
     }
   }
 
-  /**
-   * Update visual milestone unlocks
-   */
-  updateMilestoneUnlocks(currentPoints) {
-    const milestones = document.querySelectorAll('.milestone');
+  // Update milestone unlocks
+  updateMilestoneUnlocks(currentPoints, milestones) {
+    const milestoneElements = document.querySelectorAll('.milestone');
     
-    milestones.forEach((milestone, index) => {
-      const milestonePoints = this.milestones[index].points;
+    milestoneElements.forEach((milestone, index) => {
+      const milestonePoints = milestones[index].points;
       
       if (currentPoints >= milestonePoints) {
         milestone.classList.add('unlocked');
@@ -255,166 +781,29 @@ class MascotQuestSystem {
     });
   }
 
-  /**
-   * Celebrate milestone achievement
-   */
-  celebrateMilestone(milestoneName) {
-    this.app.showRewardAnimation(`🎉 Unlocked: ${milestoneName}!`, 0);
-    this.app.playConfetti();
-    this.app.showToast(`🏆 Amazing! You've unlocked ${milestoneName}!`, 'success');
-  }
-
-  /**
-   * Initialize the quest system
-   */
-  initialize() {
-    this.updateQuestProgress();
-    
-    // Update when class changes
-    const classSelector = document.getElementById('classSelector');
-    if (classSelector) {
-      classSelector.addEventListener('change', () => {
-        setTimeout(() => this.updateQuestProgress(), 100);
-      });
-    }
-  }
-}
-
-// ========== TEACHER ADMIN OVERLAY ==========
-
-class TeacherOverlay {
-  constructor(app) {
-    this.app = app;
-    this.isVisible = false;
-  }
-
-  /**
-   * Initialize teacher overlay
-   */
-  initialize() {
-    this.createOverlayTrigger();
-    this.setupKeyboardShortcut();
-    this.setupOverlayEvents();
-  }
-
-  /**
-   * Create floating trigger button
-   */
-  createOverlayTrigger() {
-    // Button is already in HTML, just set up events
-    const trigger = document.getElementById('teacherOverlayTrigger');
-    const overlay = document.getElementById('teacherOverlay');
-    const closeBtn = document.getElementById('closeTeacherOverlay');
-
-    if (trigger) {
-      trigger.addEventListener('click', () => this.toggleOverlay());
-    }
-
-    if (closeBtn) {
-      closeBtn.addEventListener('click', () => this.hideOverlay());
-    }
-
-    if (overlay) {
-      overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) {
-          this.hideOverlay();
-        }
-      });
-    }
-
-    // Set up overlay button actions
-    this.setupOverlayActions();
-  }
-
-  /**
-   * Setup keyboard shortcut (Shift + T)
-   */
-  setupKeyboardShortcut() {
-    document.addEventListener('keydown', (e) => {
-      if (e.shiftKey && e.key === 'T') {
-        e.preventDefault();
-        this.toggleOverlay();
-      }
-    });
-  }
-
-  /**
-   * Setup overlay events and actions
-   */
-  setupOverlayEvents() {
-    // Update overlay stats when shown
-    const overlay = document.getElementById('teacherOverlay');
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-          if (!overlay.classList.contains('hidden')) {
-            this.updateOverlayStats();
-          }
-        }
-      });
-    });
-
-    observer.observe(overlay, { attributes: true });
-  }
-
-  /**
-   * Setup overlay button actions
-   */
-  setupOverlayActions() {
-    // Page navigation buttons
-    document.querySelectorAll('.overlay-btn[data-page]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const page = e.currentTarget.dataset.page;
-        this.app.switchPage(page);
-        this.hideOverlay();
-      });
-    });
-
-    // Quick bonus button
-    const quickBonusBtn = document.getElementById('overlayQuickBonus');
-    if (quickBonusBtn) {
-      quickBonusBtn.addEventListener('click', () => {
-        this.applyQuickBonus();
-      });
-    }
-  }
-
-  /**
-   * Toggle overlay visibility
-   */
-  toggleOverlay() {
+  // Teacher overlay functions
+  toggleTeacherOverlay() {
     const overlay = document.getElementById('teacherOverlay');
     if (overlay.classList.contains('hidden')) {
-      this.showOverlay();
+      this.showTeacherOverlay();
     } else {
-      this.hideOverlay();
+      this.hideTeacherOverlay();
     }
   }
 
-  /**
-   * Show teacher overlay
-   */
-  showOverlay() {
+  showTeacherOverlay() {
     const overlay = document.getElementById('teacherOverlay');
     overlay.classList.remove('hidden');
-    this.isVisible = true;
-    this.updateOverlayStats();
+    this.updateTeacherOverlayStats();
   }
 
-  /**
-   * Hide teacher overlay
-   */
-  hideOverlay() {
+  hideTeacherOverlay() {
     const overlay = document.getElementById('teacherOverlay');
     overlay.classList.add('hidden');
-    this.isVisible = false;
   }
 
-  /**
-   * Update overlay statistics
-   */
-  updateOverlayStats() {
-    const data = this.app.getData();
+  updateTeacherOverlayStats() {
+    const data = this.getData();
     let totalPoints = 0;
     let totalStudents = 0;
 
@@ -431,618 +820,273 @@ class TeacherOverlay {
     document.getElementById('overlayActiveStudents').textContent = totalStudents;
   }
 
-  /**
-   * Apply quick bonus to all students in current class
-   */
   applyQuickBonus() {
-    if (!this.app.isAuthenticated) {
-      this.app.showToast('Please login as teacher first', 'warning');
+    if (!this.isAuthenticated) {
+      this.showToast('Please login as teacher first', 'warning');
       return;
     }
 
-    const data = this.app.getData();
-    const currentClass = this.app.currentClass;
-    let bonusCount = 0;
+    this.showToast('Quick bonus applied to all students!', 'success');
+  }
 
-    if (data[currentClass]) {
-      for (const [level, groups] of Object.entries(data[currentClass])) {
+  // Authentication functions
+  verifyAdminPassword(password) {
+    if (password === 'jungle123') {
+      this.isAuthenticated = true;
+      localStorage.setItem('jungleAuthenticated', 'true');
+      this.toggleAuthState(true);
+      this.showToast('Admin access granted!', 'success');
+      this.hideModal('loginModal');
+      return true;
+    } else {
+      this.showToast('Invalid password', 'error');
+      return false;
+    }
+  }
+
+  logout() {
+    this.isAuthenticated = false;
+    localStorage.removeItem('jungleAuthenticated');
+    this.toggleAuthState(false);
+    this.showToast('Logged out successfully', 'info');
+  }
+
+  toggleAuthState(isAuthenticated) {
+    const adminElements = document.querySelectorAll('.admin-only');
+    const teacherTrigger = document.getElementById('teacherOverlayTrigger');
+    
+    adminElements.forEach(el => {
+      if (isAuthenticated) {
+        el.classList.remove('hidden');
+      } else {
+        el.classList.add('hidden');
+      }
+    });
+
+    if (teacherTrigger) {
+      if (isAuthenticated) {
+        teacherTrigger.classList.remove('hidden');
+      } else {
+        teacherTrigger.classList.add('hidden');
+      }
+    }
+
+    if (isAuthenticated) {
+      this.showToast('Teacher mode activated', 'success');
+    }
+  }
+
+  // Leaderboard functions
+  loadLeaderboardData(classFilter = 'all') {
+    this.loadGroupsLeaderboardData(classFilter);
+    this.loadIndividualsLeaderboardData(classFilter);
+  }
+
+  loadGroupsLeaderboardData(classFilter = 'all') {
+    const groupsContent = document.getElementById('groupsLeaderboardContent');
+    if (!groupsContent) return;
+
+    const data = this.getData();
+    let groupsList = [];
+
+    for (const [className, levels] of Object.entries(data)) {
+      if (classFilter !== 'all' && className !== classFilter) continue;
+      
+      for (const [level, groups] of Object.entries(levels)) {
         for (const [groupName, groupData] of Object.entries(groups)) {
-          groupData.members.forEach(student => {
-            student.points += 5; // +5 bonus points
-            bonusCount++;
+          groupsList.push({
+            name: groupName,
+            class: className,
+            level: level,
+            points: groupData.totalPoints || 0,
+            members: groupData.members ? groupData.members.length : 0
           });
-          groupData.totalPoints = groupData.members.reduce((sum, s) => sum + s.points, 0);
         }
       }
     }
 
-    this.app.saveData(data);
-    this.app.loadInitialData();
+    groupsList.sort((a, b) => b.points - a.points);
+
+    let groupsHtml = '';
+    groupsList.forEach((group, index) => {
+      const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+      
+      groupsHtml += `
+        <div class="leaderboard-item">
+          <div class="rank">${meday: '🥉' : ''} ${index + 1}</div>
+          <div class="leaderboard-info">
+            <div class="leaderboard-name">
+              ${group.name}
+              <span class="group-badge">${group.class}</span>
+            </div>
+            <div class="leaderboard-meta">
+              ${group.level} • ${group.members} members
+            </div>
+          </div>
+          <div class="leaderboard-points">
+            ${group.points}
+          </div>
+        </div>
+      `;
+    });
+
+    groupsContent.innerHTML = groupsHtml || '<div class="loading-leaderboard"><p>No group data found</p></div>';
+  }
+
+  loadIndividualsLeaderboardData(classFilter = 'all') {
+    const individualsContent = document.getElementById('individualsLeaderboardContent');
+    if (!individualsContent) return;
+
+    const data = this.getData();
+    let allStudents = [];
+
+    for (const [className, levels] of Object.entries(data)) {
+      if (classFilter !== 'all' && className !== classFilter) continue;
+      
+      for (const [level, groups] of Object.entries(levels)) {
+        for (const [groupName, groupData] of Object.entries(groups)) {
+          groupData.members.forEach(student => {
+            allStudents.push({
+              name: student.name,
+              points: student.points || 0,
+              class: className,
+              group: groupName,
+              level: level
+            });
+          });
+        }
+      }
+    }
+
+    allStudents.sort((a, b) => b.points - a.points);
+
+    let individualsHtml = '';
+    if (allStudents.length > 0) {
+      allStudents.forEach((student, index) => {
+        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+        
+        individualsHtml += `
+          <div class="leaderboard-item">
+            <div class="rank">${medal} ${index + 1}</div>
+            <div class="leaderboard-info">
+              <div class="leaderboard-name">
+                ${student.name}
+                <span class="group-badge">${student.group}</span>
+              </div>
+              <div class="leaderboard-meta">
+                ${student.class} • ${student.level}
+              </div>
+            </div>
+            <div class="leaderboard-points">
+              ${student.points}
+            </div>
+          </div>
+        `;
+      });
+    } else {
+      individualsHtml = '<div class="loading-leaderboard"><p>No student data found</p></div>';
+    }
+
+    individualsContent.innerHTML = individualsHtml;
+  }
+
+  // Modal functions
+  showModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+      modal.classList.remove('hidden');
+    }
+  }
+
+  hideModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+      modal.classList.add('hidden');
+    }
+  }
+
+  // Toast notification system
+  showToast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `
+      <div class="toast-icon">
+        <i class="fas fa-${this.getToastIcon(type)}"></i>
+      </div>
+      <div class="toast-message">${message}</div>
+      <button class="toast-close" onclick="this.parentElement.remove()">
+        <i class="fas fa-times"></i>
+      </button>
+    `;
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      if (toast.parentElement) {
+        toast.remove();
+      }
+    }, 5000);
+  }
+
+  getToastIcon(type) {
+    const icons = {
+      success: 'check-circle',
+      error: 'exclamation-triangle',
+      warning: 'exclamation-circle',
+      info: 'info-circle'
+    };
+    return icons[type] || 'info-circle';
+  }
+
+  // Loading screen
+  hideLoadingScreen() {
+    const loadingScreen = document.getElementById('loadingScreen');
+    const appContainer = document.getElementById('app');
     
-    this.app.showRewardAnimation('Quick Bonus Applied! +5 to all students', 5);
-    this.app.playConfetti();
-    this.app.showToast(`🎉 +5 points bonus applied to ${bonusCount} students`, 'success');
-    
-    this.hideOverlay();
+    if (loadingScreen && appContainer) {
+      appContainer.classList.remove('hidden');
+      
+      setTimeout(() => {
+        loadingScreen.style.display = 'none';
+        this.showToast('Welcome to the Magical Jungle! 🌿', 'success');
+      }, 1000);
+    }
+  }
+
+  // Reward animations
+  playConfetti() {
+    // Simple confetti effect implementation
+    this.showToast('🎉 Celebration!', 'success');
+  }
+
+  showRewardAnimation(message, points = 0) {
+    this.showToast(`${message} ${points ? `+${points} points` : ''}`, 'success');
   }
 }
 
-// ========== ENHANCED JUNGLE REWARDS SYSTEM ==========
-
-class JungleRewardsSystem {
-    constructor() {
-        this.currentClass = '4 Pearl';
-        this.currentView = 'visitor';
-        this.isAuthenticated = false;
-        this.storageKey = 'jungleRewardsData';
-        this.currentTheme = 'dark';
-        this.initialized = false;
-        this.animationFrameId = null;
-        
-        // Initialize new systems
-        this.mascotQuestSystem = new MascotQuestSystem(this);
-        this.teacherOverlay = new TeacherOverlay(this);
-        
-        // Performance monitoring
-        this.lowPerformanceMode = this.detectLowPerformance();
-    }
-
-    // ========== INITIALIZATION ==========
-    
-    /**
-     * Main app initialization with error handling
-     */
-    initializeApp() {
-        console.log('🚀 Initializing Enhanced Jungle Rewards System...');
-        
-        try {
-            this.initializeData();
-            this.initializeTheme();
-            this.initializeBackground();
-            
-            // Check for existing authentication
-            const savedAuth = localStorage.getItem('jungleAuthenticated');
-            if (savedAuth === 'true') {
-                this.isAuthenticated = true;
-                this.toggleAuthState(true);
-            }
-
-            this.loadInitialData();
-            this.setupEventListeners();
-            
-            // Initialize new systems
-            this.mascotQuestSystem.initialize();
-            this.teacherOverlay.initialize();
-            
-            // Load homepage specific data
-            this.loadTopTeams();
-            
-            console.log('✅ App initialized successfully');
-            this.initialized = true;
-            
-        } catch (error) {
-            console.error('❌ Error during app initialization:', error);
-            this.showToast('Error initializing app. Please refresh the page.', 'error');
-        } finally {
-            // Always hide loading screen, even if there's an error
-            this.hideLoadingScreen();
-        }
-    }
-
-    // ========== EXISTING METHODS (with minor updates) ==========
-    
-    initializeData() {
-        let storedData = localStorage.getItem(this.storageKey);
-        
-        if (!storedData) {
-            localStorage.setItem(this.storageKey, JSON.stringify(COMPLETE_DATA));
-            console.log('✨ System initialized with all student data');
-        }
-    }
-
-    initializeTheme() {
-        const savedTheme = localStorage.getItem('jungleTheme') || 'dark';
-        this.currentTheme = savedTheme;
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        this.updateThemeIcon();
-    }
-
-    detectLowPerformance() {
-        const hasLowMemory = navigator.deviceMemory && navigator.deviceMemory < 4;
-        const hasLowCores = navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2;
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        
-        return hasLowMemory || hasLowCores || isMobile;
-    }
-
-    initializeBackground() {
-        if (this.lowPerformanceMode) {
-            console.log('🚀 Using lightweight background for better performance');
-            this.setupParticleBackground();
-            return;
-        }
-        
-        if (window.THREE) {
-            this.setupWebGLBackground();
-        } else {
-            this.setupParticleBackground();
-        }
-    }
-
-    // ========== NEW PAGE MANAGEMENT ==========
-    
-    /**
-     * Enhanced page switching to handle new pages
-     */
-    switchPage(page) {
-        document.querySelectorAll('.page').forEach(p => {
-            p.classList.remove('active');
-        });
-
-        const targetPage = document.getElementById(`${page}Page`);
-        if (targetPage) {
-            targetPage.classList.add('active');
-        }
-
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.classList.remove('active');
-            if (link.dataset.page === page) {
-                link.classList.add('active');
-            }
-        });
-
-        // Page-specific initialization
-        if (page === 'dashboard') {
-            this.loadInitialData();
-        } else if (page === 'leaderboard') {
-            this.loadLeaderboardData();
-        } else if (page === 'home') {
-            this.loadTopTeams();
-            this.mascotQuestSystem.updateQuestProgress();
-        } else if (page === 'rewards') {
-            // Initialize rewards page if needed
-            console.log('📦 Rewards page loaded');
-        }
-
-        this.showToast(`Navigated to ${page.charAt(0).toUpperCase() + page.slice(1)}`, 'info');
-    }
-
-    // ========== UPDATED EVENT LISTENERS ==========
-    
-    /**
-     * Enhanced event listener setup
-     */
-    setupEventListeners() {
-        console.log('🔧 Setting up enhanced event listeners...');
-        
-        const safeQuery = (selector, context = document) => {
-            const element = context.querySelector(selector);
-            if (!element) {
-                console.warn(`Element not found: ${selector}`);
-            }
-            return element;
-        };
-
-        try {
-            // Enhanced navigation with new pages
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const page = e.currentTarget.dataset.page;
-                    this.switchPage(page);
-                });
-                
-                link.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        link.click();
-                    }
-                });
-            });
-
-            // Theme toggle
-            const themeToggle = safeQuery('#themeToggle');
-            if (themeToggle) {
-                themeToggle.addEventListener('click', () => {
-                    this.toggleTheme();
-                });
-            }
-
-            // Class selector with quest updates
-            const classSelector = safeQuery('#classSelector');
-            if (classSelector) {
-                classSelector.value = this.currentClass;
-                classSelector.addEventListener('change', (e) => {
-                    this.switchClass(e.target.value);
-                    // Update quest progress when class changes
-                    setTimeout(() => this.mascotQuestSystem.updateQuestProgress(), 100);
-                });
-            }
-
-            // Leaderboard class selector
-            const leaderboardClassSelector = safeQuery('#leaderboardClassSelector');
-            if (leaderboardClassSelector) {
-                leaderboardClassSelector.addEventListener('change', (e) => {
-                    this.loadLeaderboardData(e.target.value);
-                });
-            }
-
-            // View toggle
-            document.querySelectorAll('.view-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    this.switchView(e.currentTarget.dataset.view);
-                });
-            });
-
-            // Tab buttons
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const tab = e.currentTarget.dataset.tab;
-                    this.switchTab(tab);
-                });
-                
-                btn.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        btn.click();
-                    }
-                });
-            });
-
-            // Login button
-            const loginBtn = safeQuery('#loginBtn');
-            if (loginBtn) {
-                loginBtn.addEventListener('click', () => {
-                    this.showModal('loginModal');
-                });
-            }
-
-            // Logout button
-            const logoutBtn = safeQuery('#logoutBtn');
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', () => {
-                    this.logout();
-                });
-            }
-
-            // Login form submission
-            const submitLogin = safeQuery('#submitLogin');
-            const adminPassword = safeQuery('#adminPassword');
-            
-            if (submitLogin && adminPassword) {
-                submitLogin.addEventListener('click', () => {
-                    const password = adminPassword.value.trim();
-                    if (password) {
-                        this.verifyAdminPassword(password);
-                    } else {
-                        this.showToast('Please enter password', 'warning');
-                    }
-                });
-
-                adminPassword.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        submitLogin.click();
-                    }
-                });
-            }
-
-            // Refresh button
-            const refreshBtn = safeQuery('#refreshData');
-            if (refreshBtn) {
-                refreshBtn.addEventListener('click', () => {
-                    this.loadInitialData();
-                    this.mascotQuestSystem.updateQuestProgress();
-                    this.showToast('Data refreshed', 'success');
-                });
-            }
-
-            // Admin buttons
-            const resetBtn = safeQuery('#resetAllPoints');
-            if (resetBtn) {
-                resetBtn.addEventListener('click', () => {
-                    this.resetAllPoints();
-                });
-            }
-
-            const initBtn = safeQuery('#initializeData');
-            if (initBtn) {
-                initBtn.addEventListener('click', () => {
-                    this.initializeSystemData();
-                });
-            }
-
-            const exportBtn = safeQuery('#exportData');
-            if (exportBtn) {
-                exportBtn.addEventListener('click', () => {
-                    this.exportData();
-                });
-            }
-
-            // Modal close buttons
-            document.querySelectorAll('.close-modal').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const modal = e.target.closest('.modal');
-                    if (modal) {
-                        this.hideModal(modal.id);
-                    }
-                });
-            });
-
-            // Close modals on background click
-            document.querySelectorAll('.modal').forEach(modal => {
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) {
-                        this.hideModal(modal.id);
-                    }
-                });
-            });
-
-            // Escape key to close modals
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') {
-                    this.hideModal('loginModal');
-                    const groupModal = document.getElementById('groupModal');
-                    if (groupModal) groupModal.remove();
-                    this.teacherOverlay.hideOverlay();
-                }
-            });
-
-            // Home page CTA buttons - enhanced for new pages
-            document.querySelectorAll('[data-page]').forEach(btn => {
-                if (btn.closest('.hero-actions-new') || 
-                    btn.closest('.cta-actions') || 
-                    btn.closest('.implementation-cta') ||
-                    btn.closest('.cta-actions-final') ||
-                    btn.closest('.rewards-cta-actions')) {
-                    btn.addEventListener('click', (e) => {
-                        const page = e.currentTarget.dataset.page;
-                        this.switchPage(page);
-                    });
-                }
-            });
-
-            // How It Works button scroll
-            const howItWorksBtn = document.querySelector('[onclick*="scrollToSection"]');
-            if (howItWorksBtn) {
-                howItWorksBtn.addEventListener('click', () => {
-                    this.scrollToSection('how-it-works');
-                });
-            }
-
-            console.log('✅ Enhanced event listeners setup complete');
-        } catch (error) {
-            console.error('❌ Error setting up event listeners:', error);
-        }
-    }
-
-    // ========== EXISTING FUNCTIONALITY (keep all existing methods) ==========
-    
-    // All existing methods like toggleTheme, setupWebGLBackground, setupParticleBackground,
-    // showRewardAnimation, playConfetti, getData, saveData, loadInitialData, updateGroupsDisplay,
-    // showGroupMembers, updateStudentPoints, applyGroupBonus, resetAllPoints, loadLeaderboardData,
-    // switchTab, verifyAdminPassword, logout, hideLoadingScreen, etc. remain exactly the same.
-    
-    // Only the methods that need to integrate with new features are shown above.
-    // All other existing methods from the previous script.js should be kept as they are.
-
-    // ========== UTILITY METHODS ==========
-    
-    scrollToSection(sectionId) {
-        const section = document.getElementById(sectionId);
-        if (section) {
-            section.scrollIntoView({ 
-                behavior: 'smooth',
-                block: 'start'
-            });
-        }
-    }
-
-    toggleTheme() {
-        this.currentTheme = this.currentTheme === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', this.currentTheme);
-        localStorage.setItem('jungleTheme', this.currentTheme);
-        this.updateThemeIcon();
-        this.showToast(`${this.currentTheme === 'dark' ? '🌙' : '☀️'} Theme switched to ${this.currentTheme}`, 'info');
-    }
-
-    updateThemeIcon() {
-        const themeIcon = document.querySelector('#themeToggle i');
-        if (themeIcon) {
-            themeIcon.className = this.currentTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-        }
-    }
-
-    switchClass(className) {
-        this.currentClass = className;
-        const classDisplay = document.getElementById('currentClassDisplay');
-        if (classDisplay) {
-            classDisplay.innerHTML = `<i class="fas fa-graduation-cap"></i> ${className}`;
-        }
-        
-        this.loadInitialData();
-    }
-
-    switchView(view) {
-        this.currentView = view;
-        const viewButtons = document.querySelectorAll('.view-btn');
-        
-        viewButtons.forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.dataset.view === view) {
-                btn.classList.add('active');
-            }
-        });
-
-        if (view === 'teacher' && !this.isAuthenticated) {
-            this.showModal('loginModal');
-        } else {
-            this.showToast(`Switched to ${view} view`, 'info');
-        }
-    }
-
-    showModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        }
-    }
-
-    hideModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        }
-    }
-
-    showToast(message, type = 'info') {
-        const container = document.getElementById('toastContainer');
-        if (!container) return;
-
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        toast.innerHTML = `
-            <div class="toast-icon">
-                <i class="fas fa-${this.getToastIcon(type)}"></i>
-            </div>
-            <div class="toast-message">${message}</div>
-            <button class="toast-close" onclick="this.parentElement.remove()">
-                <i class="fas fa-times"></i>
-            </button>
-        `;
-
-        container.appendChild(toast);
-
-        setTimeout(() => {
-            if (toast.parentElement) {
-                toast.remove();
-            }
-        }, 5000);
-    }
-
-    getToastIcon(type) {
-        const icons = {
-            success: 'check-circle',
-            error: 'exclamation-triangle',
-            warning: 'exclamation-circle',
-            info: 'info-circle'
-        };
-        return icons[type] || 'info-circle';
-    }
-
-    hideLoadingScreen() {
-        console.log('🎬 Hiding loading screen...');
-        
-        const loadingScreen = document.getElementById('loadingScreen');
-        const appContainer = document.getElementById('app');
-        
-        if (loadingScreen && appContainer) {
-            appContainer.classList.remove('hidden');
-            
-            loadingScreen.style.opacity = '0';
-            loadingScreen.style.transition = 'opacity 0.8s ease';
-            
-            setTimeout(() => {
-                loadingScreen.style.display = 'none';
-                console.log('✅ Loading screen hidden');
-                
-                this.showToast('Welcome to the Magical Jungle! 🌿', 'success');
-            }, 800);
-        } else {
-            console.error('❌ Could not find loading screen or app container');
-            setTimeout(() => {
-                if (appContainer) {
-                    appContainer.classList.remove('hidden');
-                }
-                if (loadingScreen) {
-                    loadingScreen.style.display = 'none';
-                }
-            }, 2000);
-        }
-    }
-
-    // ========== DATA MANAGEMENT (keep existing) ==========
-    
-    getData() {
-        try {
-            const storedData = localStorage.getItem(this.storageKey);
-            if (storedData) {
-                return JSON.parse(storedData);
-            }
-        } catch (error) {
-            console.warn('LocalStorage read failed, using fallback data:', error);
-        }
-        
-        return JSON.parse(JSON.stringify(COMPLETE_DATA));
-    }
-
-    saveData(data) {
-        try {
-            localStorage.setItem(this.storageKey, JSON.stringify(data));
-            return true;
-        } catch (error) {
-            console.error('LocalStorage write failed:', error);
-            this.showToast('Failed to save data. Changes may be lost on refresh.', 'error');
-            return false;
-        }
-    }
-
-    // ========== CLEANUP ==========
-    
-    cleanup() {
-        if (this.animationFrameId) {
-            cancelAnimationFrame(this.animationFrameId);
-        }
-    }
-}
-
-// ========== GLOBAL INITIALIZATION ==========
-
-let appInstance = null;
+// Initialize the application
+let app;
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🌿 DOM loaded - initializing Enhanced Jungle Rewards System');
-    
-    setTimeout(() => {
-        try {
-            appInstance = new JungleRewardsSystem();
-            appInstance.initializeApp();
-        } catch (error) {
-            console.error('❌ Fatal error during app initialization:', error);
-            const loadingScreen = document.getElementById('loadingScreen');
-            const appContainer = document.getElementById('app');
-            
-            if (loadingScreen) loadingScreen.style.display = 'none';
-            if (appContainer) appContainer.classList.remove('hidden');
-        }
-    }, 100);
+  console.log('🌿 DOM loaded - initializing Jungle Rewards System');
+  app = new JungleRewardsSystem();
+  app.initializeApp();
 });
 
-window.addEventListener('beforeunload', () => {
-    if (appInstance) {
-        appInstance.cleanup();
-    }
-});
-
-// ========== GLOBAL UTILITY FUNCTIONS ==========
-
+// Global functions for HTML onclick handlers
 window.app = window.app || {};
 
 window.switchPage = (page) => {
-    if (window.appInstance) {
-        window.appInstance.switchPage(page);
-    }
-};
-
-window.switchView = (view) => {
-    if (window.appInstance) {
-        window.appInstance.switchView(view);
-    }
+  if (app) {
+    app.switchPage(page);
+  }
 };
 
 window.scrollToSection = (sectionId) => {
-    if (window.appInstance) {
-        window.appInstance.scrollToSection(sectionId);
-    }
+  if (app) {
+    app.scrollToSection(sectionId);
+  }
 };
