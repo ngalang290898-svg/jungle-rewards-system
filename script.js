@@ -1,3 +1,22 @@
+// Add this at the VERY BEGINNING of your script.js file
+console.log('🔄 Script loaded successfully');
+
+// Test if CSS is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('✅ DOM fully loaded');
+    
+    // Check if styles are applied
+    const testElement = document.createElement('div');
+    testElement.style.position = 'absolute';
+    testElement.style.left = '-9999px';
+    testElement.innerHTML = 'CSS Test';
+    document.body.appendChild(testElement);
+    
+    const computedStyle = window.getComputedStyle(testElement);
+    console.log('🎨 CSS computed style test:', computedStyle.fontFamily);
+    
+    testElement.remove();
+});
 // Complete Student Data - All 72 Students
 const COMPLETE_DATA = {
   "4 Pearl": {
