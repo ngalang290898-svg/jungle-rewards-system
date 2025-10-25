@@ -4,18 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Jungle × Magical - Premium ESL Reward System for Year 4 Students</title>
-  <meta name="description" content="Futuristic gamified classroom reward system for ELTC Malaysia Remedial Instruction. Track student progress, award crystals, and motivate Year 4 ESL learners.">
+  <meta name="description" content="Transform English learning with positive reinforcement. Gamified reward system for Year 4 ESL students at SK Bebuloh. Track progress, earn crystals, and build confidence.">
   <meta name="theme-color" content="#00ffc3">
   
   <!-- SEO Meta Tags -->
-  <meta name="keywords" content="ESL, rewards system, classroom management, gamification, Year 4 students, ELTC Malaysia, remedial instruction">
-  <meta name="author" content="ELTC Malaysia">
+  <meta name="keywords" content="ESL, rewards system, classroom management, gamification, Year 4 students, ELTC Malaysia, remedial instruction, positive reinforcement, English learning">
+  <meta name="author" content="SK Bebuloh Year 4 ESL Program">
   <meta name="robots" content="index, follow">
   
   <!-- Open Graph Meta Tags -->
-  <meta property="og:title" content="Jungle × Magical - ESL Reward System">
-  <meta property="og:description" content="Transform your ESL classroom with our futuristic gamified reward system for Year 4 students.">
+  <meta property="og:title" content="Jungle × Magical - Transform English Learning with Positive Reinforcement">
+  <meta property="og:description" content="Where every effort earns magical crystals and builds confident English speakers at SK Bebuloh.">
   <meta property="og:type" content="website">
+  <meta property="og:image" content="/assets/mascot/explorer-hero.png">
   
   <!-- Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -65,6 +66,11 @@
 
   <!-- Main App -->
   <div id="app" class="app-container hidden">
+    <!-- Teacher Admin Overlay Trigger -->
+    <button id="teacherOverlayTrigger" class="teacher-overlay-trigger" title="Teacher Admin (Shift+T)" aria-label="Open teacher admin panel">
+      <i class="fas fa-chalkboard-teacher"></i>
+    </button>
+
     <!-- Premium Navigation -->
     <nav class="premium-nav" role="navigation" aria-label="Main navigation">
       <div class="nav-brand">
@@ -90,6 +96,10 @@
           <button class="nav-link" data-page="leaderboard" role="menuitem">
             <i class="fas fa-trophy" aria-hidden="true"></i>
             <span>Leaderboard</span>
+          </button>
+          <button class="nav-link" data-page="rewards" role="menuitem">
+            <i class="fas fa-gift" aria-hidden="true"></i>
+            <span>Rewards & Strategies</span>
           </button>
           <button class="nav-link admin-only" data-page="admin" role="menuitem">
             <i class="fas fa-user-shield" aria-hidden="true"></i>
@@ -149,7 +159,7 @@
       <!-- Home Page -->
       <div id="homePage" class="page active">
         <div class="home-page">
-          <!-- 1️⃣ Hero Section -->
+          <!-- 1️⃣ Hero Section - Redesigned -->
           <section class="hero-section-new" aria-labelledby="hero-title">
             <div class="hero-container">
               <div class="hero-content-new">
@@ -158,11 +168,10 @@
                   SK Bebuloh Year 4 ESL Program
                 </div>
                 <h1 id="hero-title" class="hero-title-new">
-                  Transform English Learning with 
-                  <span class="gradient-text">Positive Reinforcement</span>
+                  Explore. Earn. <span class="gradient-text">Grow Strong in English!</span>
                 </h1>
                 <p class="hero-subtitle-new">
-                  Where every effort earns magical crystals and builds confident English speakers
+                  Positive reinforcement encourages effort, confidence, and success in English learning.
                 </p>
                 <div class="hero-actions-new">
                   <button class="hero-cta-new primary" data-page="leaderboard">
@@ -191,6 +200,15 @@
               </div>
               <div class="hero-visual-new">
                 <div class="jungle-scene">
+                  <!-- Mascot Character -->
+                  <div class="mascot-character explorer" id="mainMascot">
+                    <div class="mascot-avatar">
+                      <i class="fas fa-child"></i>
+                    </div>
+                    <div class="mascot-speech-bubble">
+                      Let's learn English together!
+                    </div>
+                  </div>
                   <div class="floating-animal animal-1">
                     <i class="fas fa-paw"></i>
                   </div>
@@ -215,18 +233,26 @@
                   What is Positive Reinforcement?
                 </h2>
                 <p class="section-subtitle">
-                  Celebrating progress to build lifelong English confidence
+                  Positive reinforcement rewards good effort and learning behaviors with points and praise.
+                </p>
+              </div>
+              
+              <div class="reinforcement-description">
+                <p>
+                  When pupils feel proud of their progress, they participate more and enjoy learning English. 
+                  Our magical crystal system instantly recognizes and celebrates every English learning achievement, 
+                  building confidence and creating positive learning experiences.
                 </p>
               </div>
               
               <div class="reinforcement-flow">
                 <div class="flow-step">
                   <div class="step-icon">
-                    <i class="fas fa-star"></i>
+                    <i class="fas fa-hand-paper"></i>
                   </div>
                   <div class="step-content">
-                    <h3>Do Good Work</h3>
-                    <p>Students participate in English activities</p>
+                    <h3>Effort</h3>
+                    <p>Students participate and try their best</p>
                   </div>
                 </div>
                 <div class="flow-arrow">
@@ -238,7 +264,7 @@
                   </div>
                   <div class="step-content">
                     <h3>Earn Crystals</h3>
-                    <p>Immediate recognition for their efforts</p>
+                    <p>Receive immediate recognition</p>
                   </div>
                 </div>
                 <div class="flow-arrow">
@@ -246,38 +272,18 @@
                 </div>
                 <div class="flow-step">
                   <div class="step-icon">
-                    <i class="fas fa-smile-beam"></i>
+                    <i class="fas fa-trophy"></i>
                   </div>
                   <div class="step-content">
-                    <h3>Feel Proud</h3>
-                    <p>Build confidence and self-esteem</p>
+                    <h3>Celebrate Success</h3>
+                    <p>Build confidence and achievement</p>
                   </div>
                 </div>
-                <div class="flow-arrow">
-                  <i class="fas fa-arrow-right"></i>
-                </div>
-                <div class="flow-step">
-                  <div class="step-icon">
-                    <i class="fas fa-rocket"></i>
-                  </div>
-                  <div class="step-content">
-                    <h3>Achieve More</h3>
-                    <p>Continuous improvement in English skills</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="reinforcement-description">
-                <p>
-                  Positive reinforcement is a powerful teaching strategy that rewards desired behaviors, 
-                  making students more likely to repeat them. In our ESL program, we use magical crystals 
-                  to instantly recognize and celebrate every English learning achievement.
-                </p>
               </div>
             </div>
           </section>
 
-          <!-- 3️⃣ Benefits for Pupils Section -->
+          <!-- 3️⃣ Benefits for Pupils Section - Redesigned -->
           <section class="benefits-section" aria-labelledby="benefits-title">
             <div class="container">
               <div class="section-header-centered">
@@ -292,11 +298,11 @@
               
               <div class="benefits-grid">
                 <div class="benefit-card">
-                  <div class benefit-icon">
-                    <i class="fas fa-user-graduate"></i>
+                  <div class="benefit-icon">
+                    <i class="fas fa-lion"></i>
                   </div>
-                  <h3>Builds Confidence</h3>
-                  <p>Students gain self-assurance as they see their progress and receive immediate positive feedback for their English efforts.</p>
+                  <h3>Builds Courage & Confidence</h3>
+                  <p>Students gain self-assurance as they see their progress and receive immediate positive feedback.</p>
                   <div class="benefit-stat">
                     <i class="fas fa-chart-line"></i>
                     <span>89% confidence boost</span>
@@ -305,10 +311,10 @@
                 
                 <div class="benefit-card">
                   <div class="benefit-icon">
-                    <i class="fas fa-comment-dots"></i>
+                    <i class="fas fa-hand-paper"></i>
                   </div>
-                  <h3>Improves English Engagement</h3>
-                  <p>Transform English practice from obligation to excitement with our crystal reward system and friendly competition.</p>
+                  <h3>Increases English Participation</h3>
+                  <p>Transform English practice from obligation to excitement with crystal rewards.</p>
                   <div class="benefit-stat">
                     <i class="fas fa-users"></i>
                     <span>92% participation rate</span>
@@ -317,12 +323,24 @@
                 
                 <div class="benefit-card">
                   <div class="benefit-icon">
-                    <i class="fas fa-hands-helping"></i>
+                    <i class="fas fa-party-horn"></i>
                   </div>
-                  <h3>Supports Teamwork</h3>
-                  <p>Animal-themed teams encourage collaboration, peer support, and positive classroom relationships among students.</p>
+                  <h3>Makes Learning Fun</h3>
+                  <p>Gamified approach turns English learning into an exciting jungle adventure.</p>
                   <div class="benefit-stat">
+                    <i class="fas fa-smile-beam"></i>
+                    <span>3.2x more engagement</span>
+                  </div>
+                </div>
+                
+                <div class="benefit-card">
+                  <div class="benefit-icon">
                     <i class="fas fa-heart"></i>
+                  </div>
+                  <h3>Encourages Teamwork & Empathy</h3>
+                  <p>Animal-themed teams foster collaboration and positive classroom relationships.</p>
+                  <div class="benefit-stat">
+                    <i class="fas fa-hands-helping"></i>
                     <span>78% better teamwork</span>
                   </div>
                 </div>
@@ -331,18 +349,18 @@
                   <div class="benefit-icon">
                     <i class="fas fa-chart-line"></i>
                   </div>
-                  <h3>Encourages Continuous Growth</h3>
-                  <p>The crystal system motivates ongoing improvement and helps students develop a growth mindset in English learning.</p>
+                  <h3>Helps Track Progress Clearly</h3>
+                  <p>Visual crystal system shows growth and motivates continuous improvement.</p>
                   <div class="benefit-stat">
                     <i class="fas fa-gem"></i>
-                    <span>3.2x more practice</span>
+                    <span>Clear growth tracking</span>
                   </div>
                 </div>
               </div>
             </div>
           </section>
 
-          <!-- 4️⃣ How We Use It at SK Bebuloh -->
+          <!-- 4️⃣ How We Use It at SK Bebuloh - Fixed Layout -->
           <section class="implementation-section" aria-labelledby="implementation-title">
             <div class="container">
               <div class="section-header-centered">
@@ -407,120 +425,110 @@
                   </div>
                 </div>
               </div>
+              
+              <div class="implementation-cta">
+                <button class="premium-btn large" data-page="rewards">
+                  <i class="fas fa-gift"></i>
+                  Rewards & Strategies
+                </button>
+              </div>
             </div>
           </section>
 
-          <!-- 5️⃣ How to Earn Crystals -->
-          <section class="crystal-rules-section" aria-labelledby="crystal-rules-title">
+          <!-- 5️⃣ Mascot Story & Mini-Quest System -->
+          <section class="quest-section" aria-labelledby="quest-title">
             <div class="container">
               <div class="section-header-centered">
-                <h2 id="crystal-rules-title" class="section-title">
-                  <i class="fas fa-gem"></i>
-                  How to Earn Crystals
+                <h2 id="quest-title" class="section-title">
+                  <i class="fas fa-map"></i>
+                  Jungle Adventure Quest
                 </h2>
                 <p class="section-subtitle">
-                  Clear, achievable ways for students to earn recognition
+                  Follow your progress and unlock magical jungle locations!
                 </p>
               </div>
               
-              <div class="crystal-rules-grid">
-                <div class="rule-card">
-                  <div class="rule-icon">
-                    <i class="fas fa-hand-paper"></i>
-                  </div>
-                  <div class="rule-content">
-                    <h3>Active Participation</h3>
-                    <p>+5 crystals for volunteering answers in English during lessons</p>
-                  </div>
-                </div>
-                
-                <div class="rule-card">
-                  <div class="rule-icon">
-                    <i class="fas fa-tasks"></i>
-                  </div>
-                  <div class="rule-content">
-                    <h3>Completed Work</h3>
-                    <p>+10 crystals for finishing English assignments on time</p>
+              <div class="quest-container">
+                <div class="mascot-guide">
+                  <div class="mascot-character guide">
+                    <div class="mascot-avatar">
+                      <i class="fas fa-child"></i>
+                    </div>
+                    <div class="mascot-speech-bubble" id="mascotMessage">
+                      Let's start our jungle adventure! Earn crystals to unlock new locations.
+                    </div>
                   </div>
                 </div>
                 
-                <div class="rule-card">
-                  <div class="rule-icon">
-                    <i class="fas fa-users"></i>
+                <div class="quest-progress">
+                  <div class="progress-track">
+                    <div class="milestone" data-points="20">
+                      <div class="milestone-icon">
+                        <i class="fas fa-water"></i>
+                      </div>
+                      <span class="milestone-label">Waterfall</span>
+                    </div>
+                    <div class="milestone" data-points="40">
+                      <div class="milestone-icon">
+                        <i class="fas fa-mountain"></i>
+                      </div>
+                      <span class="milestone-label">Ancient Temple</span>
+                    </div>
+                    <div class="milestone" data-points="60">
+                      <div class="milestone-icon">
+                        <i class="fas fa-users"></i>
+                      </div>
+                      <span class="milestone-label">Jungle Friends</span>
+                    </div>
+                    <div class="milestone" data-points="100">
+                      <div class="milestone-icon">
+                        <i class="fas fa-crown"></i>
+                      </div>
+                      <span class="milestone-label">Jungle Champion</span>
+                    </div>
                   </div>
-                  <div class="rule-content">
-                    <h3>Team Collaboration</h3>
-                    <p>+8 crystals for helping classmates with English tasks</p>
+                  
+                  <div class="progress-bar-quest">
+                    <div class="progress-fill-quest" id="questProgressFill"></div>
                   </div>
-                </div>
-                
-                <div class="rule-card">
-                  <div class="rule-icon">
-                    <i class="fas fa-lightbulb"></i>
+                  
+                  <div class="quest-stats">
+                    <div class="quest-stat">
+                      <span class="stat-label">Current Crystals</span>
+                      <span class="stat-value" id="currentCrystals">0</span>
+                    </div>
+                    <div class="quest-stat">
+                      <span class="stat-label">Next Milestone</span>
+                      <span class="stat-value" id="nextMilestone">20</span>
+                    </div>
+                    <div class="quest-stat">
+                      <span class="stat-label">Progress</span>
+                      <span class="stat-value" id="progressPercent">0%</span>
+                    </div>
                   </div>
-                  <div class="rule-content">
-                    <h3>Creative Answers</h3>
-                    <p>+7 crystals for innovative thinking in English activities</p>
-                  </div>
-                </div>
-                
-                <div class="rule-card">
-                  <div class="rule-icon">
-                    <i class="fas fa-chart-line"></i>
-                  </div>
-                  <div class="rule-content">
-                    <h3>Weekly Improvement</h3>
-                    <p>+15 crystals for showing progress from previous week</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="crystal-note">
-                <i class="fas fa-info-circle"></i>
-                <p>Teachers can also award bonus crystals for exceptional effort, kindness, or helping create a positive learning environment.</p>
-              </div>
-            </div>
-          </section>
-
-          <!-- 6️⃣ Featured Teams Highlight -->
-          <section class="featured-teams-section" aria-labelledby="featured-teams-title">
-            <div class="container">
-              <div class="section-header-centered">
-                <h2 id="featured-teams-title" class="section-title">
-                  <i class="fas fa-crown"></i>
-                  Top Teams of the Week
-                </h2>
-                <p class="section-subtitle">
-                  Celebrating our current jungle champions
-                </p>
-              </div>
-              
-              <div class="teams-showcase" id="teamsShowcase">
-                <!-- Dynamic content will be loaded by JavaScript -->
-                <div class="loading-teams">
-                  <i class="fas fa-spinner fa-spin"></i>
-                  <p>Loading top teams...</p>
                 </div>
               </div>
             </div>
           </section>
 
-          <!-- 7️⃣ Call to Action -->
-          <section class="cta-section" aria-labelledby="cta-title">
+          <!-- 6️⃣ Final CTA Section -->
+          <section class="cta-section-final" aria-labelledby="final-cta-title">
             <div class="container">
-              <div class="cta-content">
-                <h2 id="cta-title" class="cta-title">Ready to Explore the Magic?</h2>
-                <p class="cta-subtitle">
-                  Join our jungle adventure and see how positive reinforcement transforms English learning
+              <div class="cta-content-final">
+                <h2 id="final-cta-title" class="cta-title-final">
+                  You are part of the adventure — let's grow stronger together!
+                </h2>
+                <p class="cta-subtitle-final">
+                  Join our jungle learning community and watch your English skills blossom
                 </p>
-                <div class="cta-actions">
-                  <button class="cta-button primary" data-page="leaderboard">
+                <div class="cta-actions-final">
+                  <button class="cta-button-final primary" data-page="leaderboard">
                     <i class="fas fa-trophy"></i>
-                    See the Leaderboard
+                    View Leaderboard
                   </button>
-                  <button class="cta-button secondary" onclick="app.switchView('teacher')">
-                    <i class="fas fa-chalkboard-teacher"></i>
-                    Teacher Resources
+                  <button class="cta-button-final secondary" data-page="rewards">
+                    <i class="fas fa-gift"></i>
+                    Rewards & Strategies
                   </button>
                 </div>
               </div>
@@ -531,7 +539,6 @@
 
       <!-- Dashboard Page -->
       <div id="dashboardPage" class="page">
-        <!-- ... existing dashboard content remains exactly the same ... -->
         <div class="dashboard-page">
           <div class="dashboard-header">
             <div class="header-content">
@@ -563,7 +570,6 @@
 
       <!-- Leaderboard Page -->
       <div id="leaderboardPage" class="page">
-        <!-- ... existing leaderboard content remains exactly the same ... -->
         <div class="leaderboard-page">
           <div class="leaderboard-header">
             <h2 class="page-title">
@@ -613,9 +619,168 @@
         </div>
       </div>
 
+      <!-- Rewards & Strategies Page -->
+      <div id="rewardsPage" class="page">
+        <div class="rewards-page">
+          <div class="rewards-header">
+            <h2 class="page-title">
+              <i class="fas fa-gift"></i>
+              Rewards & Strategies
+            </h2>
+            <p class="page-subtitle">Discover how to earn crystals and unlock amazing rewards in our jungle adventure</p>
+          </div>
+
+          <div class="rewards-content">
+            <!-- Rewards Types Section -->
+            <section class="rewards-types-section">
+              <div class="container">
+                <h3 class="section-title-medium">
+                  <i class="fas fa-gem"></i>
+                  Types of Rewards
+                </h3>
+                <div class="rewards-grid">
+                  <div class="reward-card">
+                    <div class="reward-icon">
+                      <i class="fas fa-star"></i>
+                    </div>
+                    <h4>Weekly Champion</h4>
+                    <p>Special certificate and featured spot on the leaderboard for top performers each week</p>
+                    <div class="reward-cost">100+ crystals</div>
+                  </div>
+                  
+                  <div class="reward-card">
+                    <div class="reward-icon">
+                      <i class="fas fa-crown"></i>
+                    </div>
+                    <h4>Jungle Champion</h4>
+                    <p>Exclusive champion badge and special privileges for reaching 100+ crystals</p>
+                    <div class="reward-cost">100 crystals</div>
+                  </div>
+                  
+                  <div class="reward-card">
+                    <div class="reward-icon">
+                      <i class="fas fa-trophy"></i>
+                    </div>
+                    <h4>Team Trophy</h4>
+                    <p>Group celebration and special class activity for the winning animal team</p>
+                    <div class="reward-cost">Team effort</div>
+                  </div>
+                  
+                  <div class="reward-card">
+                    <div class="reward-icon">
+                      <i class="fas fa-medal"></i>
+                    </div>
+                    <h4>Progress Medals</h4>
+                    <p>Special recognition medals for reaching 25, 50, and 75 crystal milestones</p>
+                    <div class="reward-cost">25+ crystals</div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Earning Strategies Section -->
+            <section class="strategies-section">
+              <div class="container">
+                <h3 class="section-title-medium">
+                  <i class="fas fa-lightbulb"></i>
+                  How to Earn Crystals
+                </h3>
+                <div class="strategies-grid">
+                  <div class="strategy-category">
+                    <h4>Class Participation</h4>
+                    <ul class="strategy-list">
+                      <li>+5 crystals for volunteering answers in English</li>
+                      <li>+3 crystals for asking thoughtful questions</li>
+                      <li>+2 crystals for active listening</li>
+                    </ul>
+                  </div>
+                  
+                  <div class="strategy-category">
+                    <h4>Completed Work</h4>
+                    <ul class="strategy-list">
+                      <li>+10 crystals for finished assignments</li>
+                      <li>+5 crystals for neat handwriting</li>
+                      <li>+3 crystals for on-time submission</li>
+                    </ul>
+                  </div>
+                  
+                  <div class="strategy-category">
+                    <h4>Teamwork & Helpfulness</h4>
+                    <ul class="strategy-list">
+                      <li>+8 crystals for helping classmates</li>
+                      <li>+5 crystals for positive encouragement</li>
+                      <li>+3 crystals for sharing materials</li>
+                    </ul>
+                  </div>
+                  
+                  <div class="strategy-category">
+                    <h4>Creative Thinking</h4>
+                    <ul class="strategy-list">
+                      <li>+7 crystals for innovative answers</li>
+                      <li>+5 crystals for creative writing</li>
+                      <li>+3 crystals for unique ideas</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Bonus Opportunities -->
+            <section class="bonus-section">
+              <div class="container">
+                <h3 class="section-title-medium">
+                  <i class="fas fa-bolt"></i>
+                  Bonus Crystal Opportunities
+                </h3>
+                <div class="bonus-grid">
+                  <div class="bonus-card">
+                    <h4>Weekly Improvement</h4>
+                    <p>+15 crystals for showing progress from previous week</p>
+                  </div>
+                  
+                  <div class="bonus-card">
+                    <h4>Perfect Attendance</h4>
+                    <p>+20 crystals for full week attendance</p>
+                  </div>
+                  
+                  <div class="bonus-card">
+                    <h4>Homework Star</h4>
+                    <p>+10 crystals for exceptional homework</p>
+                  </div>
+                  
+                  <div class="bonus-card">
+                    <h4>Kindness Ambassador</h4>
+                    <p>+12 crystals for exceptional kindness</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- CTA Section -->
+            <section class="rewards-cta-section">
+              <div class="container">
+                <div class="rewards-cta-content">
+                  <h3>Ready to Start Your Adventure?</h3>
+                  <p>Join the jungle quest and watch your English skills grow with every crystal earned!</p>
+                  <div class="rewards-cta-actions">
+                    <button class="premium-btn" data-page="home">
+                      <i class="fas fa-home"></i>
+                      Back to Home
+                    </button>
+                    <button class="premium-btn" data-page="leaderboard">
+                      <i class="fas fa-trophy"></i>
+                      View Leaderboard
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+
       <!-- Admin Page -->
       <div id="adminPage" class="page">
-        <!-- ... existing admin content remains exactly the same ... -->
         <div class="admin-page">
           <div class="admin-header">
             <h2 class="page-title">
@@ -674,7 +839,7 @@
       </div>
     </main>
 
-    <!-- 8️⃣ Footer -->
+    <!-- Footer -->
     <footer class="main-footer" role="contentinfo">
       <div class="container">
         <div class="footer-content">
@@ -725,6 +890,48 @@
         </div>
       </div>
     </footer>
+
+    <!-- Teacher Admin Overlay -->
+    <div id="teacherOverlay" class="teacher-overlay hidden">
+      <div class="teacher-overlay-content">
+        <div class="overlay-header">
+          <h3><i class="fas fa-chalkboard-teacher"></i> Teacher Quick Access</h3>
+          <button class="close-overlay" id="closeTeacherOverlay">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="overlay-body">
+          <div class="teacher-stats">
+            <div class="teacher-stat">
+              <span class="stat-label">Total Classroom Points</span>
+              <span class="stat-value" id="overlayTotalPoints">0</span>
+            </div>
+            <div class="teacher-stat">
+              <span class="stat-label">Active Students</span>
+              <span class="stat-value" id="overlayActiveStudents">0</span>
+            </div>
+          </div>
+          <div class="teacher-actions">
+            <button class="overlay-btn" data-page="admin">
+              <i class="fas fa-cog"></i>
+              Admin Panel
+            </button>
+            <button class="overlay-btn" data-page="rewards">
+              <i class="fas fa-gift"></i>
+              Rewards Center
+            </button>
+            <button class="overlay-btn" id="overlayQuickBonus">
+              <i class="fas fa-star"></i>
+              Quick Bonus
+            </button>
+            <!-- Future expansion placeholder -->
+            <div class="future-features">
+              <p><small>More tools coming soon...</small></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Reward Animation Container -->
     <div id="rewardContainer" class="reward-container" aria-live="polite" aria-atomic="true"></div>
