@@ -1,7 +1,7 @@
 {
-  "name": "jungle-rewards-system",
-  "version": "1.0.0",
-  "description": "Premium gamified classroom reward system for ELTC Malaysia Remedial Instruction",
+  "name": "jungle-magical-rewards",
+  "version": "2.0.0",
+  "description": "Futuristic gamified classroom reward system for ELTC Malaysia Remedial Instruction",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,6 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "three": "^0.128.0"
+  },
+  "devDependencies": {
     "vite": "^4.0.0"
   }
 }
