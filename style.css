@@ -2095,3 +2095,26 @@ body {
     font-size: 2rem;
   }
 }
+/* ... all your existing CSS code ... */
+
+/* === RESPONSIVE DESIGN === */
+@media (max-width: 480px) {
+  /* ... your existing responsive styles ... */
+}
+
+/* === LOADING SCREEN FIXES === */
+/* Ensure app container is properly shown */
+.app-container:not(.hidden) {
+  display: block;
+  opacity: 1;
+}
+
+/* Loading screen transitions */
+.loading-screen {
+  transition: opacity 0.8s ease;
+}
+
+/* Emergency fallback styles */
+.loading-screen[style*="display: none"] {
+  display: none !important;
+}
