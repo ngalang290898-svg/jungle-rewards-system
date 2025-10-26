@@ -1941,7 +1941,7 @@ body {
   transform: translateY(-3px);
 }
 
-/* Modal Styles */
+/* Modal Styles - FIXED FOR MOBILE */
 .modal {
   position: fixed;
   top: 0;
@@ -1953,7 +1953,7 @@ body {
   align-items: center;
   justify-content: center;
   z-index: 2000;
-  padding: 2rem;
+  padding: 1rem;
 }
 
 .modal-content {
@@ -1965,19 +1965,20 @@ body {
   max-width: 500px;
   max-height: 90vh;
   overflow: hidden;
+  position: relative;
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 2rem;
+  padding: 1.5rem;
   border-bottom: var(--glass-border);
   background: rgba(255, 255, 255, 0.05);
 }
 
 .modal-header h3 {
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   font-weight: 600;
   color: var(--text-primary);
   display: flex;
@@ -1997,6 +1998,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .close-modal:hover {
@@ -2005,13 +2007,14 @@ body {
 }
 
 .modal-body {
-  padding: 2rem;
+  padding: 1.5rem;
+  overflow-y: auto;
 }
 
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
 }
 
 .form-group {
@@ -2029,7 +2032,7 @@ body {
 }
 
 .form-group input {
-  padding: 1.25rem;
+  padding: 1rem;
   background: var(--bg-glass);
   border: var(--glass-border);
   border-radius: var(--border-radius-sm);
@@ -2037,6 +2040,7 @@ body {
   font-family: inherit;
   font-size: 1rem;
   backdrop-filter: var(--glass-blur);
+  width: 100%;
 }
 
 .form-group input:focus {
@@ -2052,6 +2056,99 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
+}
+
+/* Members Modal Styles */
+.members-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: var(--glass-border);
+}
+
+.members-header h4 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.members-subtitle {
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+.members-summary {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.total-members, .total-points {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(0, 255, 195, 0.1);
+  border-radius: 20px;
+  font-weight: 600;
+  color: var(--accent-primary);
+  border: 1px solid rgba(0, 255, 195, 0.2);
+}
+
+.members-container {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.member-item {
+  display: flex;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: var(--transition-smooth);
+}
+
+.member-item:last-child {
+  border-bottom: none;
+}
+
+.member-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.member-rank {
+  font-weight: 800;
+  color: var(--accent-primary);
+  min-width: 40px;
+  text-align: center;
+  font-size: 1.1rem;
+}
+
+.member-info {
+  flex: 1;
+  margin: 0 1rem;
+}
+
+.member-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.member-level {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.member-points {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  color: var(--accent-primary);
+  font-size: 1.1rem;
 }
 
 /* Toast Notifications */
@@ -2424,6 +2521,28 @@ body {
   .leaderboard-info {
     margin: 0;
   }
+  
+  /* Modal Responsive */
+  .modal {
+    padding: 0.5rem;
+  }
+  
+  .modal-content {
+    max-height: 95vh;
+  }
+  
+  .modal-header {
+    padding: 1.25rem;
+  }
+  
+  .modal-body {
+    padding: 1.25rem;
+  }
+  
+  .members-summary {
+    flex-direction: column;
+    gap: 1rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -2453,5 +2572,13 @@ body {
   
   .page-title {
     font-size: 2rem;
+  }
+  
+  .modal-header h3 {
+    font-size: 1.2rem;
+  }
+  
+  .members-header h4 {
+    font-size: 1.3rem;
   }
 }
