@@ -271,12 +271,15 @@ class JungleRewardsSystem {
       });
     }
 
-    // Login form submission
+    // Login form submission - FIXED FOR MOBILE
     const submitLogin = document.getElementById('submitLogin');
     const adminPassword = document.getElementById('adminPassword');
     
     if (submitLogin && adminPassword) {
-      submitLogin.addEventListener('click', () => {
+      // Use click event for mobile compatibility
+      submitLogin.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         const password = adminPassword.value.trim();
         if (password) {
           this.verifyAdminPassword(password);
@@ -285,8 +288,10 @@ class JungleRewardsSystem {
         }
       });
 
+      // Also handle form submission
       adminPassword.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
+          e.preventDefault();
           submitLogin.click();
         }
       });
@@ -346,9 +351,11 @@ class JungleRewardsSystem {
       });
     }
 
-    // Modal close buttons
+    // Modal close buttons - FIXED FOR MOBILE
     document.querySelectorAll('.close-modal').forEach(btn => {
       btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         const modal = e.target.closest('.modal');
         if (modal) {
           this.hideModal(modal.id);
@@ -383,6 +390,7 @@ class JungleRewardsSystem {
       if (e.key === 'Escape') {
         this.hideModal('loginModal');
         this.hideTeacherOverlay();
+        this.hideModal('membersModal');
       }
       
       // Teacher overlay shortcut (Shift + T)
@@ -391,6 +399,14 @@ class JungleRewardsSystem {
         this.toggleTeacherOverlay();
       }
     });
+
+    // Prevent form submission on enter in login modal
+    const loginForm = document.querySelector('.login-form');
+    if (loginForm) {
+      loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+      });
+    }
 
     console.log('✅ Event listeners setup complete');
   }
@@ -614,7 +630,7 @@ class JungleRewardsSystem {
     `;
   }
 
-  // Show group members modal
+  // Show group members modal - FIXED VERSION
   showGroupMembers(className, groupName, level) {
     const data = this.getData();
     const groupData = data[className]?.[level]?.[groupName];
@@ -624,8 +640,80 @@ class JungleRewardsSystem {
       return;
     }
 
-    // For now, just show a toast. In a full implementation, this would open a modal.
-    this.showToast(`Viewing members of ${groupName}`, 'info');
+    // Create or get members modal
+    let membersModal = document.getElementById('membersModal');
+    
+    if (!membersModal) {
+      // Create the modal if it doesn't exist
+      membersModal = document.createElement('div');
+      membersModal.id = 'membersModal';
+      membersModal.className = 'modal hidden';
+      membersModal.innerHTML = `
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3><i class="fas fa-users"></i> Group Members</h3>
+            <button class="close-modal">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="members-list" id="membersListContent"></div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(membersModal);
+
+      // Add close event listener
+      const closeBtn = membersModal.querySelector('.close-modal');
+      closeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.hideModal('membersModal');
+      });
+
+      // Close on background click
+      membersModal.addEventListener('click', (e) => {
+        if (e.target === membersModal) {
+          this.hideModal('membersModal');
+        }
+      });
+    }
+
+    // Populate members list
+    const membersList = document.getElementById('membersListContent');
+    let membersHtml = `
+      <div class="members-header">
+        <h4>${groupName}</h4>
+        <p class="members-subtitle">${level} • ${className}</p>
+        <div class="members-summary">
+          <span class="total-members">${groupData.members.length} members</span>
+          <span class="total-points">${groupData.totalPoints} total crystals</span>
+        </div>
+      </div>
+      <div class="members-container">
+    `;
+
+    groupData.members.forEach((member, index) => {
+      membersHtml += `
+        <div class="member-item">
+          <div class="member-rank">${index + 1}</div>
+          <div class="member-info">
+            <div class="member-name">${member.name}</div>
+            <div class="member-level">${level}</div>
+          </div>
+          <div class="member-points">
+            <i class="fas fa-gem"></i>
+            ${member.points}
+          </div>
+        </div>
+      `;
+    });
+
+    membersHtml += '</div>';
+    membersList.innerHTML = membersHtml;
+
+    // Show the modal
+    this.showModal('membersModal');
   }
 
   // Apply group bonus
@@ -889,13 +977,20 @@ class JungleRewardsSystem {
     this.showToast('Quick bonus applied to all students!', 'success');
   }
 
-  // Authentication functions
+  // Authentication functions - FIXED FOR MOBILE
   verifyAdminPassword(password) {
     if (password === 'jungle123') {
       this.isAuthenticated = true;
       localStorage.setItem('jungleAuthenticated', 'true');
       this.toggleAuthState(true);
       this.showToast('Admin access granted!', 'success');
+      
+      // Clear the password field
+      const adminPassword = document.getElementById('adminPassword');
+      if (adminPassword) {
+        adminPassword.value = '';
+      }
+      
       this.hideModal('loginModal');
       return true;
     } else {
@@ -1050,11 +1145,13 @@ class JungleRewardsSystem {
     individualsContent.innerHTML = individualsHtml;
   }
 
-  // Modal functions
+  // Modal functions - FIXED FOR MOBILE
   showModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
       modal.classList.remove('hidden');
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden';
     }
   }
 
@@ -1062,6 +1159,8 @@ class JungleRewardsSystem {
     const modal = document.getElementById(modalId);
     if (modal) {
       modal.classList.add('hidden');
+      // Restore body scroll
+      document.body.style.overflow = '';
     }
   }
 
