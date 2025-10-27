@@ -1,13 +1,19 @@
 {
   "name": "jungle-rewards-system",
-  "version": "1.0.0",
-  "description": "Static HTML/CSS/JS site",
+  "version": "1.1.0",
+  "description": "Premium ESL Reward System for Year 4 Students - Fixed Mobile Version",
   "scripts": {
     "build": "echo 'No build process needed for static site'",
-    "dev": "echo 'Static site - no dev server needed'"
+    "dev": "echo 'Static site - open index.html in browser'",
+    "test": "echo 'Run manual testing on multiple devices'"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["esl", "education", "rewards", "gamification", "malaysia"],
+  "author": "SK Bebuloh Year 4 ESL Program",
   "license": "ISC",
-  "type": "module"
+  "type": "module",
+  "browserslist": [
+    "last 2 versions",
+    "> 1%",
+    "not dead"
+  ]
 }
