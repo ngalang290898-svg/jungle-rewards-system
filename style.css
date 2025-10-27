@@ -112,6 +112,7 @@ body {
   align-items: center;
   justify-content: center;
   z-index: 9999;
+  transition: opacity 0.5s ease;
 }
 
 .loading-content {
@@ -288,6 +289,8 @@ body {
   font-family: inherit;
   font-size: 0.9rem;
   font-weight: 500;
+  min-height: 44px;
+  text-decoration: none;
 }
 
 .nav-link:hover {
@@ -325,6 +328,8 @@ body {
   align-items: center;
   justify-content: center;
   font-size: 1.1rem;
+  min-height: 44px;
+  min-width: 44px;
 }
 
 .theme-btn:hover {
@@ -368,6 +373,8 @@ body {
   font-weight: 600;
   cursor: pointer;
   transition: var(--transition-smooth);
+  min-height: 44px;
+  text-decoration: none;
 }
 
 .login-btn:hover {
@@ -424,6 +431,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
 }
 
 .logout-btn:hover {
@@ -460,6 +469,8 @@ body {
   transition: var(--transition-smooth);
   font-family: inherit;
   font-weight: 600;
+  min-height: 44px;
+  text-decoration: none;
 }
 
 .view-btn:hover {
@@ -561,6 +572,8 @@ body {
   cursor: pointer;
   transition: var(--transition-smooth);
   backdrop-filter: var(--glass-blur);
+  min-height: 44px;
+  text-decoration: none;
 }
 
 .refresh-btn:hover {
@@ -687,6 +700,8 @@ body {
   font-weight: 600;
   cursor: pointer;
   transition: var(--transition-smooth);
+  min-height: 44px;
+  text-decoration: none;
 }
 
 .group-action-btn.view-members {
@@ -782,6 +797,8 @@ body {
   transition: var(--transition-smooth);
   font-family: inherit;
   font-weight: 600;
+  min-height: 44px;
+  text-decoration: none;
 }
 
 .tab-btn:hover {
@@ -961,6 +978,8 @@ body {
   font-weight: 600;
   cursor: pointer;
   transition: var(--transition-smooth);
+  min-height: 44px;
+  text-decoration: none;
 }
 
 .hero-cta-new.primary {
@@ -1556,6 +1575,8 @@ body {
   font-weight: 600;
   cursor: pointer;
   transition: var(--transition-smooth);
+  min-height: 44px;
+  text-decoration: none;
 }
 
 .cta-button-final.primary {
@@ -1591,6 +1612,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
 }
 
 .teacher-overlay-trigger:hover {
@@ -1651,6 +1674,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
 }
 
 .close-overlay:hover {
@@ -1711,6 +1736,8 @@ body {
   cursor: pointer;
   transition: var(--transition-smooth);
   text-align: left;
+  min-height: 44px;
+  text-decoration: none;
 }
 
 .overlay-btn:hover {
@@ -1926,6 +1953,8 @@ body {
   cursor: pointer;
   transition: var(--transition-smooth);
   justify-content: center;
+  min-height: 44px;
+  text-decoration: none;
 }
 
 .premium-btn.large {
@@ -1999,6 +2028,8 @@ body {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  min-height: 44px;
+  min-width: 44px;
 }
 
 .close-modal:hover {
@@ -2041,6 +2072,7 @@ body {
   font-size: 1rem;
   backdrop-filter: var(--glass-blur);
   width: 100%;
+  min-height: 44px;
 }
 
 .form-group input:focus {
@@ -2287,59 +2319,13 @@ body {
   align-items: center;
   justify-content: center;
   font-size: 0.9rem;
+  min-height: 44px;
+  min-width: 44px;
 }
 
 .member-action-btn:hover {
   background: rgba(255, 255, 255, 0.15);
   color: var(--accent-primary);
-}
-
-/* Responsive design for members modal */
-@media (max-width: 768px) {
-  .members-container {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-  
-  .member-card {
-    padding: 1.25rem;
-  }
-  
-  .member-card-header {
-    gap: 0.75rem;
-  }
-  
-  .member-avatar {
-    width: 45px;
-    height: 45px;
-    font-size: 1.1rem;
-  }
-  
-  .member-name {
-    font-size: 1rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .members-summary {
-    flex-direction: column;
-    gap: 1rem;
-  }
-  
-  .member-card-stats {
-    flex-direction: column;
-    gap: 1rem;
-    text-align: center;
-  }
-  
-  .member-points-display {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  
-  .points-info {
-    align-items: center;
-  }
 }
 
 /* Toast Notifications */
@@ -2408,6 +2394,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
 }
 
 .toast-close:hover {
@@ -2559,12 +2547,14 @@ body {
   }
 }
 
-/* Responsive Design */
+/* === CRITICAL MOBILE FIXES === */
 @media (max-width: 768px) {
   .premium-nav {
     flex-direction: column;
     gap: 1.5rem;
-    padding: 1.5rem;
+    padding: 1.5rem 1rem;
+    backdrop-filter: none;
+    background: var(--bg-secondary);
   }
   
   .nav-center {
@@ -2574,23 +2564,35 @@ body {
   
   .nav-links {
     width: 100%;
-    justify-content: center;
-    flex-wrap: wrap;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 0.5rem;
+  }
+  
+  .nav-link {
+    padding: 0.75rem 1rem;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
   
   .nav-actions {
     width: 100%;
-    justify-content: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
   }
   
   .hero-container {
     grid-template-columns: 1fr;
     gap: 3rem;
     text-align: center;
+    padding: 0 1rem;
   }
   
   .hero-title-new {
     font-size: 2.5rem;
+    line-height: 1.2;
   }
   
   .hero-stats-new {
@@ -2601,6 +2603,7 @@ body {
   
   .hero-actions-new {
     flex-direction: column;
+    gap: 1rem;
   }
   
   .reinforcement-flow {
@@ -2632,6 +2635,7 @@ body {
   .footer-bottom {
     flex-direction: column;
     text-align: center;
+    gap: 1rem;
   }
   
   .quest-stats {
@@ -2691,6 +2695,7 @@ body {
   
   .groups-grid {
     grid-template-columns: 1fr;
+    gap: 1.5rem;
   }
   
   .group-actions {
@@ -2701,12 +2706,14 @@ body {
   .leaderboard-controls {
     flex-direction: column;
     text-align: center;
+    gap: 1rem;
   }
   
   .leaderboard-item {
     flex-direction: column;
     text-align: center;
     gap: 1rem;
+    padding: 1.5rem 1rem;
   }
   
   .leaderboard-info {
@@ -2720,6 +2727,8 @@ body {
   
   .modal-content {
     max-height: 95vh;
+    margin: 0.5rem;
+    width: calc(100% - 1rem);
   }
   
   .modal-header {
@@ -2734,6 +2743,20 @@ body {
     flex-direction: column;
     gap: 1rem;
   }
+  
+  .members-container {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .view-toggle-container {
+    padding: 1.5rem 1rem;
+  }
+  
+  .view-toggle {
+    flex-direction: column;
+    width: 100%;
+  }
 }
 
 @media (max-width: 480px) {
@@ -2747,6 +2770,7 @@ body {
   
   .view-toggle {
     flex-direction: column;
+    width: 100%;
   }
   
   .section-title {
@@ -2771,5 +2795,127 @@ body {
   
   .members-header h4 {
     font-size: 1.3rem;
+  }
+  
+  .hero-title-new {
+    font-size: 2rem;
+  }
+  
+  .hero-subtitle-new {
+    font-size: 1.1rem;
+  }
+  
+  .container {
+    padding: 0 1rem;
+  }
+  
+  .group-card, .benefit-card, .reward-card {
+    padding: 1.5rem;
+  }
+  
+  .member-card {
+    padding: 1.25rem;
+  }
+  
+  .member-card-header {
+    gap: 0.75rem;
+  }
+  
+  .member-avatar {
+    width: 45px;
+    height: 45px;
+    font-size: 1.1rem;
+  }
+  
+  .member-name {
+    font-size: 1rem;
+  }
+  
+  .member-card-stats {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .member-points-display {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .points-info {
+    align-items: center;
+  }
+}
+
+/* High contrast support for accessibility */
+@media (prefers-contrast: high) {
+  :root {
+    --text-primary: #000000;
+    --text-secondary: #333333;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f0f0f0;
+  }
+  
+  [data-theme="dark"] {
+    --text-primary: #ffffff;
+    --text-secondary: #cccccc;
+    --bg-primary: #000000;
+    --bg-secondary: #222222;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus styles for accessibility */
+button:focus, 
+.nav-link:focus, 
+.group-action-btn:focus,
+.theme-btn:focus,
+.view-btn:focus,
+.tab-btn:focus,
+.premium-btn:focus,
+.hero-cta-new:focus,
+.cta-button-final:focus,
+.overlay-btn:focus,
+.close-modal:focus,
+.close-overlay:focus,
+.toast-close:focus,
+.member-action-btn:focus {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+/* Performance optimizations */
+.premium-nav,
+.group-card,
+.benefit-card,
+.reward-card,
+.member-card {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Print styles */
+@media print {
+  .premium-nav,
+  .view-toggle-container,
+  .teacher-overlay-trigger,
+  .main-footer {
+    display: none !important;
+  }
+  
+  .app-container {
+    opacity: 1 !important;
+  }
+  
+  .page {
+    display: block !important;
   }
 }
